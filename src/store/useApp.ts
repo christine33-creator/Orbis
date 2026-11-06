@@ -263,7 +263,7 @@ export const useApp = create<State>()(
       };
     },
     {
-      name: "solis-state-v1",
+      name: "orbis-state-v1",
       partialize: ({ toasts: _t, overlays: _o, ...rest }) => rest,
     },
   ),

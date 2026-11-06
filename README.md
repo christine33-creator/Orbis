@@ -1,4 +1,6 @@
-# Solis
+# Orbis
+
+*See beyond the destination.*
 
 A community app for travel enthusiasts: a world map of destinations, hidden gems, worldwide social happenings, style-based itineraries, travel-buddy matching, and points & levels that reward people for contributing.
 
@@ -34,4 +36,4 @@ State lives in `src/store/useApp.ts` (zustand, persisted to `localStorage`). See
 - **Real news/events:** feed `NEWS`/`PULSE` from an events API or editorial CMS, keyed by destination.
 - **Imagery:** destination art is procedural SVG (`src/components/Scene.tsx`); swap for licensed photos or user uploads.
 - **Native app:** the components map cleanly onto React Native / Expo if you want App Store builds.
-- **Name:** the app name is one constant, `APP_NAME` in `src/lib/util.ts` (alternatives considered: Orbis, Solara, Novara).
+- **Brand:** the name and slogan live in `APP_NAME` / `APP_SLOGAN` in `src/lib/util.ts`.

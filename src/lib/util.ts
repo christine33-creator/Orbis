@@ -1,4 +1,5 @@
-export const APP_NAME = "Solis";
+export const APP_NAME = "Orbis";
+export const APP_SLOGAN = "See beyond the destination";
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 

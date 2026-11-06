@@ -9,7 +9,7 @@ import { DESTINATIONS } from "../data/destinations";
 import { Scene } from "../components/Scene";
 import { persona, recommend } from "../lib/persona";
 import { XP, tierFor } from "../lib/progress";
-import { APP_NAME, addDays, cx, prettyCountry, todayIso } from "../lib/util";
+import { APP_NAME, APP_SLOGAN, addDays, cx, prettyCountry, todayIso } from "../lib/util";
 
 const STEPS = ["About you", "Travel style", "Passport", "Radar", "Next trip", "Socials"];
 
@@ -51,9 +51,9 @@ export function Onboarding() {
             <span className="font-display text-2xl font-semibold">{APP_NAME}</span>
           </div>
         </div>
-        <div className="-mt-10 flex flex-1 flex-col rounded-t-[32px] bg-bg px-6 pt-8 pb-8">
-          <h1 className="font-display text-[34px] leading-[1.1] font-semibold">The world, curated by the people exploring it.</h1>
-          <p className="mt-3 text-[15px] text-muted">Find hidden gems, plan trips around your style, and meet travellers heading where you are.</p>
+        <div className="relative z-10 -mt-10 flex flex-1 flex-col rounded-t-[32px] bg-bg px-6 pt-8 pb-8">
+          <h1 className="font-display text-[36px] leading-[1.08] font-semibold">{APP_SLOGAN}.</h1>
+          <p className="mt-3 text-[15px] text-muted">The world, curated by the people exploring it. Find hidden gems, plan trips around your style, and meet travellers heading where you are.</p>
           <div className="mt-6 grid grid-cols-3 gap-2 text-center text-[12px] font-semibold">
             {[
               { icon: Gem, t: "Hidden gems" },
@@ -350,7 +350,7 @@ function Reveal({ p, onDone }: { p: Profile; onDone: () => void }) {
         <h1 className="font-display mt-1 text-[32px] leading-tight font-semibold">{per.title}</h1>
         <p className="mx-auto mt-2 max-w-[300px] text-sm text-white/75">{per.blurb}</p>
       </div>
-      <div className="-mt-8 flex-1 space-y-4 rounded-t-[32px] bg-bg px-5 pt-6 pb-6">
+      <div className="relative z-10 -mt-8 flex-1 space-y-4 rounded-t-[32px] bg-bg px-5 pt-6 pb-6">
         <Card className="flex items-center justify-between p-4">
           <div>
             <div className="eyebrow text-muted">Starting tier</div>

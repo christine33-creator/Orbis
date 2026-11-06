@@ -8,7 +8,7 @@ import { DESTINATIONS, destinationById } from "../data/destinations";
 import { TRAVELERS } from "../data/community";
 import { Avatar, Button, Card, STYLE_META, Toggle } from "../components/ui";
 import { WorldMap } from "../components/WorldMap";
-import { addDays, cx, fmtShort, prettyCountry, shareText } from "../lib/util";
+import { APP_NAME, APP_SLOGAN, addDays, cx, fmtShort, prettyCountry, shareText } from "../lib/util";
 import type { SocialLinks, Visibility } from "../types";
 import { useState } from "react";
 
@@ -41,7 +41,7 @@ export function Passport() {
   const nextDest = nextTrip && destinationById(nextTrip.destinationId);
 
   const shareProfile = async () => {
-    const text = `Follow my travels on Solis: @${p.handle} — ${per.title}, ${p.visited.length} countries stamped.`;
+    const text = `Follow my travels on ${APP_NAME}: @${p.handle} — ${per.title}, ${p.visited.length} countries stamped. ${APP_SLOGAN}.`;
     if (await shareText(p.name, text)) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
