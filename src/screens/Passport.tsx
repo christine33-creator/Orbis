@@ -8,7 +8,7 @@ import { DESTINATIONS, destinationById } from "../data/destinations";
 import { TRAVELERS } from "../data/community";
 import { Avatar, Button, Card, STYLE_META, Toggle } from "../components/ui";
 import { WorldMap } from "../components/WorldMap";
-import { addDays, cx, fmtShort, prettyCountry } from "../lib/util";
+import { addDays, cx, fmtShort, prettyCountry, shareText } from "../lib/util";
 import type { SocialLinks, Visibility } from "../types";
 import { useState } from "react";
 
@@ -27,6 +27,7 @@ export function Passport() {
   const lvl = levelFor(s.xp);
   const per = persona(p);
   const [copied, setCopied] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const followers = TRAVELERS.filter((t) => s.following.includes(t.id) && t.styles.filter((x) => p.styles.includes(x)).length >= 2).length + s.connections.length;
   const badgeInput = {
     tips: s.notes.length,
@@ -41,12 +42,10 @@ export function Passport() {
 
   const shareProfile = async () => {
     const text = `Follow my travels on Solis: @${p.handle} — ${per.title}, ${p.visited.length} countries stamped.`;
-    try {
-      if (navigator.share) await navigator.share({ title: p.name, text });
-      else await navigator.clipboard.writeText(text);
+    if (await shareText(p.name, text)) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
-    } catch { /* cancelled */ }
+    }
   };
 
   return (
@@ -280,12 +279,17 @@ export function Passport() {
         </div>
       </Card>
 
-      <button
-        onClick={() => confirm("Sign out and clear this device's profile?") && s.reset()}
-        className="mx-auto flex items-center gap-2 py-2 text-[13px] font-bold text-muted hover:text-accent"
-      >
-        <LogOut size={15} /> Sign out & reset
-      </button>
+      {confirmReset ? (
+        <div className="flex items-center justify-center gap-2 text-[13px]">
+          <span className="font-semibold">Clear this profile from this device?</span>
+          <button onClick={s.reset} className="rounded-full bg-accent px-3 py-1.5 font-bold text-white">Sign out</button>
+          <button onClick={() => setConfirmReset(false)} className="rounded-full bg-chip px-3 py-1.5 font-bold">Cancel</button>
+        </div>
+      ) : (
+        <button onClick={() => setConfirmReset(true)} className="mx-auto flex items-center gap-2 py-2 text-[13px] font-bold text-muted hover:text-accent">
+          <LogOut size={15} /> Sign out & reset
+        </button>
+      )}
       <p className="text-center text-[11px] text-faint">Level {lvl.level} · {tierFor(lvl.level)}</p>
     </div>
   );

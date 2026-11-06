@@ -8,7 +8,7 @@ import { destinationById } from "../data/destinations";
 import { FIELD_NOTES, NEWS } from "../data/community";
 import { Button, Card, Chip, Tag, TRIP_STYLE_META } from "../components/ui";
 import { Scene } from "../components/Scene";
-import { addDays, cx, fmtDayLong, fmtRange, prettyCountry } from "../lib/util";
+import { addDays, cx, fmtDayLong, fmtRange, prettyCountry, shareText } from "../lib/util";
 import type { Stop, TripStyle } from "../types";
 import { XP } from "../lib/progress";
 
@@ -45,6 +45,7 @@ function TripView({ tripCount }: { tripCount: number }) {
   const toggleWatch = useApp((s) => s.toggleWatch);
   const [switcher, setSwitcher] = useState(false);
   const [shared, setShared] = useState(false);
+  const [pendingStyle, setPendingStyle] = useState<TripStyle | null>(null);
 
   const day = trip.days[dayIdx];
   const date = addDays(trip.startDate, dayIdx);
@@ -56,17 +57,14 @@ function TripView({ tripCount }: { tripCount: number }) {
   const share = async () => {
     const text = `${trip.title} — ${fmtRange(trip.startDate, end)}\n\n` +
       trip.days.map((dy, i) => `Day ${i + 1}: ${dy.title}\n` + dy.stops.map((s) => `  ${s.time} ${s.title}`).join("\n")).join("\n\n");
-    try {
-      if (navigator.share) await navigator.share({ title: trip.title, text });
-      else await navigator.clipboard.writeText(text);
+    if (await shareText(trip.title, text)) {
       setShared(true);
       setTimeout(() => setShared(false), 1800);
-    } catch { /* user cancelled */ }
+    }
   };
 
   const restyle = (style: TripStyle) => {
-    if (style === trip.style) return;
-    if (!confirm(`Re-plan "${trip.title}" as a ${TRIP_STYLE_META[style].label} trip? Your current stops will be replaced.`)) return;
+    setPendingStyle(null);
     deleteTrip(trip.id);
     createTrip(trip.destinationId, style, trip.startDate, trip.days.length, trip.title);
   };
@@ -132,11 +130,18 @@ function TripView({ tripCount }: { tripCount: number }) {
         </div>
         <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">
           {(Object.keys(TRIP_STYLE_META) as TripStyle[]).map((s) => (
-            <Chip key={s} active={trip.style === s} icon={TRIP_STYLE_META[s].icon} onClick={() => restyle(s)} className={trip.style === s ? "!bg-navy" : ""}>
+            <Chip key={s} active={trip.style === s} icon={TRIP_STYLE_META[s].icon} onClick={() => setPendingStyle(s === trip.style ? null : s)} className={trip.style === s ? "!bg-navy" : ""}>
               {TRIP_STYLE_META[s].label}
             </Chip>
           ))}
         </div>
+        {pendingStyle && (
+          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-accent-soft p-3 text-[13px]">
+            <span className="min-w-0 flex-1 font-semibold">Re-plan as a {TRIP_STYLE_META[pendingStyle].label} trip? Current stops will be replaced.</span>
+            <button onClick={() => restyle(pendingStyle)} className="rounded-full bg-accent px-3 py-1.5 font-bold text-white">Re-plan</button>
+            <button onClick={() => setPendingStyle(null)} className="rounded-full bg-card px-3 py-1.5 font-bold">Cancel</button>
+          </div>
+        )}
       </section>
 
       {/* Destination radar */}

@@ -71,3 +71,21 @@ const PRETTY: Record<string, string> = {
   eSwatini: "Eswatini",
 };
 export const prettyCountry = (n: string) => PRETTY[n] ?? n;
+
+/** Share via the OS sheet when available, otherwise copy to the clipboard. Resolves true on success. */
+export async function shareText(title: string, text: string): Promise<boolean> {
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text });
+      return true;
+    }
+  } catch (e) {
+    if ((e as Error).name === "AbortError") return false;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
