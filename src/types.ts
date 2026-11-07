@@ -15,8 +15,14 @@ export type TravelStyle =
 /** The kind of trip an itinerary is built around. */
 export type TripStyle = "vacation" | "culture" | "adventure" | "sports" | "events" | "custom";
 
-/** Categories for the worldwide social "Pulse" feed. */
-export type PulseCategory = "sports" | "tech" | "fashion" | "art" | "music" | "food";
+/** Categories for the Global Pulse feed. */
+export type PulseCategory = "sports" | "tech" | "fashion" | "art" | "music" | "food" | "festival" | "other";
+
+export type GemCategory = "viewpoint" | "food" | "nature" | "beach" | "culture" | "shop" | "experience" | "other";
+
+export type ContentStatus = "pending" | "published" | "hidden" | "rejected";
+
+export type ItemType = "destination" | "gem" | "event";
 
 export type SceneKind = "mountain" | "water" | "city" | "temple" | "forest" | "desert" | "coast";
 
@@ -40,30 +46,76 @@ export interface Destination {
   tagline: string;
   description: string;
   bestTime: string;
-  upvotes: number;
-  tip: { text: string; author: string };
   scene: Scene;
+}
+
+export interface AuthorRef {
+  id: string;
+  handle: string;
+  name: string;
+  hue: number;
+}
+
+export interface Gem {
+  id: string;
+  authorId: string;
+  /** Null when the author's profile is private or deleted. */
+  author: AuthorRef | null;
+  destinationId: string | null;
+  name: string;
+  description: string;
+  tip: string;
+  category: GemCategory;
+  styles: TravelStyle[];
+  lat: number;
+  lng: number;
+  country: string;
+  photos: string[];
+  status: ContentStatus;
+  upvotes: number;
+  saves: number;
+  reports: number;
+  createdAt: string;
+}
+
+export interface NewGem {
+  destinationId: string | null;
+  name: string;
+  description: string;
+  tip: string;
+  category: GemCategory;
+  styles: TravelStyle[];
+  lat: number;
+  lng: number;
+  country: string;
 }
 
 export interface PulseEvent {
   id: string;
-  destinationId: string;
+  destinationId: string | null;
   city: string;
   category: PulseCategory;
   title: string;
   summary: string;
-  minutesAgo: number;
-  scene: Scene;
+  startsAt: string;
+  endsAt: string | null;
+  url: string | null;
+  imageUrl: string | null;
+  lat: number | null;
+  lng: number | null;
+  source: string;
 }
 
-export interface NewsItem {
+export interface Tip {
   id: string;
+  authorId: string;
+  author: AuthorRef | null;
   destinationId: string;
-  kind: "alert" | "intel" | "event";
-  title: string;
+  category: string;
   body: string;
-  hoursAgo: number;
-  match?: number;
+  status: ContentStatus;
+  votes: number;
+  createdAt: string;
 }
 
 export interface SocialLinks {
@@ -73,111 +125,95 @@ export interface SocialLinks {
   strava?: string;
 }
 
-export type Visibility = "public" | "verified" | "followers" | "private";
-
-export interface PlannedTrip {
-  destinationId: string;
-  from: string; // ISO date
-  to: string;
-  note: string;
+export interface Preferences {
+  pace: "slow" | "balanced" | "packed";
+  budget: "shoestring" | "comfort" | "luxury";
+  company: "solo" | "duo" | "group" | "family";
 }
 
-export interface Traveler {
+export type Role = "member" | "moderator" | "admin";
+
+export interface Profile {
   id: string;
-  name: string;
   handle: string;
-  hue: number;
-  level: number;
+  name: string;
   home: string;
-  verified: boolean;
-  styles: TravelStyle[];
-  interests: string[];
   bio: string;
-  countries: number;
-  followers: number;
-  following: number;
-  journeys: number;
+  hue: number;
+  styles: TravelStyle[];
+  preferences: Preferences;
+  /** Country names (as in the world atlas) the user has visited. */
+  visited: string[];
+  /** Destination ids the user wants updates about. */
+  watching: string[];
   socials: SocialLinks;
-  plannedTrip?: PlannedTrip;
-  /** Extra companions travelling with this person (for duo/group listings). */
-  partySize?: number;
+  visibility: "public" | "private";
+  onboarded: boolean;
+  role: Role;
+  xp: number;
+  createdAt: string;
 }
 
-export interface GroupExpedition {
-  id: string;
-  title: string;
-  destinationId: string;
-  from: string;
-  to: string;
-  kind: string;
-  leaderId: string;
-  memberIds: string[];
-  capacity: number;
-  blurb: string;
-  scene: Scene;
-  createdByMe?: boolean;
-}
+export type ProfilePatch = Partial<
+  Pick<Profile, "handle" | "name" | "home" | "bio" | "hue" | "styles" | "preferences" | "visited" | "watching" | "socials" | "visibility" | "onboarded">
+>;
 
-export interface Stop {
-  id: string;
-  time: string; // "07:30"
-  label?: string; // "Golden hour"
-  title: string;
-  description: string;
-  tag: string;
-  secret?: string;
-  reserved?: string;
-  transit?: string;
-  done?: boolean;
-  scene?: Scene;
-}
-
-export interface ItineraryDay {
-  title: string;
-  stops: Stop[];
+export interface Save {
+  itemType: ItemType;
+  itemId: string;
+  createdAt: string;
 }
 
 export interface Trip {
   id: string;
-  destinationId: string;
+  destinationId: string | null;
   title: string;
   style: TripStyle;
-  startDate: string;
-  days: ItineraryDay[];
+  startDate: string | null;
+  days: number;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface FieldNote {
+export interface TripItem {
   id: string;
-  destinationId: string;
-  category: string;
-  author: string;
-  text: string;
-  votes: number;
-  mine?: boolean;
+  tripId: string;
+  day: number;
+  position: number;
+  time: string | null;
+  title: string;
+  notes: string;
+  itemType: ItemType | null;
+  itemId: string | null;
+  done: boolean;
 }
 
-export interface Profile {
-  name: string;
-  handle: string;
-  home: string;
-  bio: string;
-  hue: number;
-  styles: TravelStyle[];
-  preferences: {
-    pace: "slow" | "balanced" | "packed";
-    budget: "shoestring" | "comfort" | "luxury";
-    company: "solo" | "duo" | "group" | "family";
-  };
-  /** Country names (as in the world atlas) the user has visited. */
-  visited: string[];
-  /** Destination ids the user wants news about. */
-  watching: string[];
-  socials: SocialLinks;
+export type NewTripItem = Omit<TripItem, "id" | "done" | "position"> & { position?: number };
+
+export type ReportTarget = "gem" | "tip" | "profile" | "event";
+export type ReportReason = "spam" | "inappropriate" | "unsafe" | "inaccurate" | "harassment" | "other";
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  targetType: ReportTarget;
+  targetId: string;
+  reason: ReportReason;
+  details: string;
+  status: "open" | "resolved" | "dismissed";
+  createdAt: string;
 }
 
 export interface XpEvent {
   id: string;
-  label: string;
   amount: number;
-  at: number;
+  reason: string;
+  ref: string;
+  createdAt: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string | null;
 }

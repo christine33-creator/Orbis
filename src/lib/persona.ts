@@ -1,5 +1,4 @@
-import type { Destination, Profile, TravelStyle } from "../types";
-import { DESTINATIONS } from "../data/destinations";
+import type { Profile, TravelStyle } from "../types";
 
 const ARCHETYPES: { styles: TravelStyle[]; title: string; blurb: string }[] = [
   { styles: ["culture", "photography"], title: "The Heritage Lens", blurb: "You chase golden hour at ancient places and come home with the story behind every frame." },
@@ -24,17 +23,4 @@ export function persona(p: Pick<Profile, "styles">) {
     }
   }
   return best;
-}
-
-/** Destinations ranked by fit with the profile; hidden gems get a boost for low popularity. */
-export function recommend(p: Pick<Profile, "styles" | "visited">, opts: { gemsOnly?: boolean } = {}): (Destination & { fit: number })[] {
-  return DESTINATIONS.filter((d) => !opts.gemsOnly || d.hiddenGem)
-    .map((d) => {
-      const overlap = d.styles.filter((s) => p.styles.includes(s)).length / Math.max(1, Math.min(3, d.styles.length));
-      const novelty = p.visited.includes(d.country) ? 0.75 : 1;
-      const quiet = (100 - d.popularity) / 100;
-      const fit = Math.round(Math.min(99, (60 + overlap * 30 + quiet * 9) * novelty));
-      return { ...d, fit };
-    })
-    .sort((a, b) => b.fit - a.fit);
 }

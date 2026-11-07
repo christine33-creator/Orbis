@@ -1,9 +1,9 @@
 import { useEffect, type ReactNode } from "react";
 import {
   ArrowLeft, Bike, Camera, Coffee, Cpu, Leaf, Moon, Mountain, Palette, Shirt, Sparkles, Sun, Ticket, Trophy, Utensils, X,
-  Landmark, Music, type LucideIcon,
+  Landmark, Music, PartyPopper, Eye, Trees, Waves, Store, MapPin, type LucideIcon,
 } from "lucide-react";
-import type { PulseCategory, TravelStyle, TripStyle } from "../types";
+import type { GemCategory, PulseCategory, SceneKind, TravelStyle, TripStyle } from "../types";
 import { cx } from "../lib/util";
 
 export const STYLE_META: Record<TravelStyle, { label: string; icon: LucideIcon }> = {
@@ -37,6 +37,19 @@ export const PULSE_META: Record<PulseCategory, { label: string; icon: LucideIcon
   art: { label: "Art & Style", icon: Palette },
   music: { label: "Music", icon: Music },
   food: { label: "Food", icon: Utensils },
+  festival: { label: "Festival", icon: PartyPopper },
+  other: { label: "Happening", icon: Sparkles },
+};
+
+export const GEM_CATEGORY_META: Record<GemCategory, { label: string; icon: LucideIcon; scene: SceneKind }> = {
+  viewpoint: { label: "Viewpoint", icon: Eye, scene: "mountain" },
+  food: { label: "Food & drink", icon: Utensils, scene: "city" },
+  nature: { label: "Nature", icon: Trees, scene: "forest" },
+  beach: { label: "Beach & swim", icon: Waves, scene: "coast" },
+  culture: { label: "Culture", icon: Landmark, scene: "temple" },
+  shop: { label: "Shop & café", icon: Store, scene: "city" },
+  experience: { label: "Experience", icon: Sparkles, scene: "water" },
+  other: { label: "Other", icon: MapPin, scene: "mountain" },
 };
 
 export function Avatar({ name, hue, size = 40, ring, className }: { name: string; hue: number; size?: number; ring?: boolean; className?: string }) {
