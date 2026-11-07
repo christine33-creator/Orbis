@@ -8,8 +8,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 92, styles: ["culture", "photography", "food", "wellness"],
     tagline: "Temples, bamboo groves & autumn maple",
     description: "Over 1,600 temples, tea houses in the Higashiyama hills and lantern-lit Gion lanes. Go early and go north to escape the crowds.",
-    bestTime: "Late Oct – Nov", upvotes: 1240,
-    tip: { text: "Rent a bike and hit Arashiyama before 7:30 AM — tour coaches arrive at 9.", author: "@chiyo_explorer" },
+    bestTime: "Late Oct – Nov",
     scene: s("temple", "#F7C59F", "#F2E6D8", "#B44A2C", "#3D2B25"),
   },
   {
@@ -17,8 +16,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 97, styles: ["tech", "food", "nightlife", "fashion", "sports"],
     tagline: "Neon, ramen and infinite neighbourhoods",
     description: "A city of villages: vintage Shimokitazawa, tech-hub Akihabara, quiet Yanaka. The marathon and design weeks pull global crowds.",
-    bestTime: "Mar – May, Oct – Nov", upvotes: 2180,
-    tip: { text: "Yanaka Ginza at dusk is old Tokyo without the queues.", author: "@kenji_visuals" },
+    bestTime: "Mar – May, Oct – Nov",
     scene: s("city", "#3B2C5E", "#E77F67", "#2B2442", "#141026"),
   },
   {
@@ -26,8 +24,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 18, styles: ["adventure", "culture", "photography", "eco"],
     tagline: "Glacial peaks & 1,000-year-old stone towers",
     description: "Medieval defensive towers stand beneath Ushba and Shkhara. The Mestia–Ushguli trek is four days of glaciers, supras and silence.",
-    bestTime: "Jul – Sep", upvotes: 512,
-    tip: { text: "Stay in a family guesthouse in Adishi — the supra dinner alone is worth the trek.", author: "@nino_trails" },
+    bestTime: "Jul – Sep",
     scene: s("mountain", "#9FC3E7", "#EAF1F7", "#6F86A3", "#2F3D4F"),
   },
   {
@@ -35,8 +32,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 22, styles: ["eco", "vacation", "photography"],
     tagline: "Emerald pools & undiscovered wild freshwater",
     description: "A 25-metre amphitheatre of tufa cascades on the Trebižat river. Swim, kayak, then eat fresh trout at a riverside mill.",
-    bestTime: "May – Jun, Sep", upvotes: 342,
-    tip: { text: "Go before 9 AM by local scooter to beat heat.", author: "@alina_travels" },
+    bestTime: "May – Jun, Sep",
     scene: s("water", "#A8D8C8", "#EAF6EF", "#3E8E6D", "#1F4D3B"),
   },
   {
@@ -44,8 +40,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 20, styles: ["culture", "photography", "adventure"],
     tagline: "A medieval pink town nestled in a river gorge",
     description: "Rose-coloured houses tumble down a canyon wrapped by Moorish walls. Pine forests nearby hide prehistoric rock art and bouldering.",
-    bestTime: "Apr – Jun, Sep – Oct", upvotes: 288,
-    tip: { text: "Walk the upper wall at sunset, then dinner on Plaza Mayor.", author: "@marta.camina" },
+    bestTime: "Apr – Jun, Sep – Oct",
     scene: s("desert", "#F5B998", "#FBE9DC", "#C0705A", "#6B3A2E"),
   },
   {
@@ -53,8 +48,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 38, styles: ["adventure", "photography", "eco"],
     tagline: "Arctic peaks rising straight out of the sea",
     description: "Red rorbu cabins, surfable Arctic beaches at Unstad and the northern lights from September.",
-    bestTime: "Jun – Aug, Sep – Mar for aurora", upvotes: 760,
-    tip: { text: "Hike Ryten for Kvalvika beach — skip Reinebringen's crowds.", author: "@fjordfinder" },
+    bestTime: "Jun – Aug, Sep – Mar for aurora",
     scene: s("mountain", "#2E3F66", "#9DB6D8", "#3A4F6E", "#18233A"),
   },
   {
@@ -62,8 +56,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 85, styles: ["tech", "food", "nightlife", "vacation"],
     tagline: "Tiled hills, fado & a booming founder scene",
     description: "Home of Web Summit, sunset miradouros and pastel de nata. Surf Ericeira or Costa da Caparica in under an hour.",
-    bestTime: "Apr – Jun, Sep – Oct", upvotes: 1460,
-    tip: { text: "Skip Tram 28 — walk from Graça to Alfama downhill instead.", author: "@two_nomads" },
+    bestTime: "Apr – Jun, Sep – Oct",
     scene: s("coast", "#F6C28B", "#FCEBD5", "#D9886A", "#5A6B8C"),
   },
   {
@@ -71,8 +64,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 80, styles: ["fashion", "food", "culture", "events"],
     tagline: "Design week, aperitivo and the Duomo rooftops",
     description: "Global capital of fashion and furniture design. Navigli canals come alive at aperitivo hour.",
-    bestTime: "Apr (Design Week), Sep (Fashion Week)", upvotes: 980,
-    tip: { text: "Brera's courtyards open to the public during Design Week — follow the lines.", author: "@giulia.style" },
+    bestTime: "Apr (Design Week), Sep (Fashion Week)",
     scene: s("city", "#E9B9A0", "#F7E7DC", "#9C6B5A", "#3E2C2A"),
   },
   {
@@ -80,8 +72,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 55, styles: ["adventure", "eco", "photography"],
     tagline: "Granite towers, glaciers and the W-Trek",
     description: "Five days of turquoise lakes, hanging glaciers and wind you'll never forget.",
-    bestTime: "Nov – Mar", upvotes: 870,
-    tip: { text: "Book refugios 6 months out; Paine Grande fills first.", author: "@mateo.andes" },
+    bestTime: "Nov – Mar",
     scene: s("mountain", "#8FB7D9", "#E5EEF5", "#56708C", "#2A3A2E"),
   },
   {
@@ -89,8 +80,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 24, styles: ["culture", "vacation", "wellness"],
     tagline: "One of Europe's oldest lakes & cliffside chapels",
     description: "Byzantine churches, Ottoman lanes and swimming coves without the Adriatic crowds.",
-    bestTime: "Jun – Sep", upvotes: 301,
-    tip: { text: "Kaneo church at 7 AM, then a boat to the springs of St. Naum.", author: "@balkan.byways" },
+    bestTime: "Jun – Sep",
     scene: s("water", "#9CC9E2", "#EAF3F8", "#4E7FA0", "#2C3E50"),
   },
   {
@@ -98,8 +88,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 16, styles: ["culture", "photography", "food"],
     tagline: "The stone city of a thousand steps",
     description: "UNESCO Ottoman tower-houses with slate roofs, a hilltop castle and slow-cooked qifqi.",
-    bestTime: "May – Jun, Sep – Oct", upvotes: 215,
-    tip: { text: "Ask for the Skenduli House tour — the family still lives there.", author: "@albanian.roads" },
+    bestTime: "May – Jun, Sep – Oct",
     scene: s("temple", "#D6C3A5", "#F3ECE1", "#8C7A62", "#3E3528"),
   },
   {
@@ -107,8 +96,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 45, styles: ["food", "culture", "events"],
     tagline: "Seven moles, mezcal and Día de Muertos",
     description: "Markets, Zapotec ruins at Monte Albán and the most moving Día de Muertos celebrations in Mexico.",
-    bestTime: "Oct – Nov, Jul (Guelaguetza)", upvotes: 640,
-    tip: { text: "Mercado 20 de Noviembre's smoke hall — pick meat, they grill it.", author: "@sabor.viajero" },
+    bestTime: "Oct – Nov, Jul (Guelaguetza)",
     scene: s("desert", "#F59E6B", "#FCE2C9", "#B5543A", "#4E2A23"),
   },
   {
@@ -116,8 +104,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 21, styles: ["adventure", "photography", "eco"],
     tagline: "Sea cliffs, grass roofs & 70,000 sheep",
     description: "Eighteen volcanic islands linked by sub-sea tunnels. Múlafossur and Trælanípa are unreal in person.",
-    bestTime: "May – Aug", upvotes: 455,
-    tip: { text: "Fog lifts fast — always keep a backup hike on the other side of the island.", author: "@fjordfinder" },
+    bestTime: "May – Aug",
     scene: s("coast", "#B6C7CF", "#E9EEF0", "#5F7A6A", "#2D3B33"),
   },
   {
@@ -125,8 +112,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 70, styles: ["culture", "food", "vacation", "photography"],
     tagline: "Lantern-lit old town & riverside tailors",
     description: "Ochre merchant houses, cao lầu noodles and 24-hour custom tailoring.",
-    bestTime: "Feb – Apr", upvotes: 720,
-    tip: { text: "Cycle to An Bàng beach through the rice paddies at sunrise.", author: "@linh.wanders" },
+    bestTime: "Feb – Apr",
     scene: s("water", "#F6B26B", "#FBE3C4", "#C4683A", "#3B2A1E"),
   },
   {
@@ -134,8 +120,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 78, styles: ["adventure", "food", "vacation", "sports"],
     tagline: "Table Mountain, wine valleys & penguins",
     description: "Hike Lion's Head at full moon, sip Stellenbosch Chenin and surf Muizenberg.",
-    bestTime: "Nov – Mar", upvotes: 910,
-    tip: { text: "Take the Platteklip trail early and cable car down.", author: "@thando.outside" },
+    bestTime: "Nov – Mar",
     scene: s("mountain", "#F4A88A", "#FBE4D6", "#6E7F8E", "#2A3540"),
   },
   {
@@ -143,8 +128,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 99, styles: ["tech", "fashion", "events", "food", "nightlife", "sports"],
     tagline: "The city that never sleeps",
     description: "Fashion Week, the Marathon and US Open, plus a bagel on every corner.",
-    bestTime: "Sep – Nov", upvotes: 2500,
-    tip: { text: "Ride the NYC Ferry to Rockaway for the cheapest skyline cruise.", author: "@bk.wanderer" },
+    bestTime: "Sep – Nov",
     scene: s("city", "#E4A4A0", "#F6DDD6", "#5E5A75", "#25233A"),
   },
   {
@@ -152,8 +136,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 6, styles: ["adventure", "eco", "photography"],
     tagline: "Dragon's blood trees on an alien island",
     description: "A third of its plants exist nowhere else on Earth. Access only via licensed operators.",
-    bestTime: "Oct – Apr", upvotes: 198,
-    tip: { text: "Camp at Dixam plateau — the stars are unreal.", author: "@far.corners" },
+    bestTime: "Oct – Apr",
     scene: s("desert", "#F2C48D", "#FBEBD5", "#8D6E4C", "#3F2F22"),
   },
   {
@@ -161,8 +144,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 40, styles: ["culture", "wellness", "eco"],
     tagline: "Saffron-robed dawn alms & Kuang Si falls",
     description: "Gilded wats on a Mekong peninsula, night markets and turquoise jungle cascades.",
-    bestTime: "Nov – Feb", upvotes: 402,
-    tip: { text: "Watch alms from across the street, silently — never from the front.", author: "@linh.wanders" },
+    bestTime: "Nov – Feb",
     scene: s("forest", "#F5C38B", "#FBEAD3", "#5E8C5A", "#24402A"),
   },
   {
@@ -170,8 +152,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 75, styles: ["sports", "food", "events", "fashion"],
     tagline: "Laneway coffee & the Australian Open",
     description: "Grand Slam tennis, the Grand Prix and the best flat white of your life.",
-    bestTime: "Jan (AO), Mar – May", upvotes: 820,
-    tip: { text: "Ground pass for the AO first week is the best-value ticket in sport.", author: "@ace.travels" },
+    bestTime: "Jan (AO), Mar – May",
     scene: s("city", "#A7C7E7", "#EAF2FA", "#5C6F86", "#22303F"),
   },
   {
@@ -179,8 +160,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: true, popularity: 35, styles: ["culture", "photography", "food"],
     tagline: "Cave dwellings carved into a ravine",
     description: "The Sassi, inhabited for 9,000 years, glow gold at dusk. Sleep in a cave hotel.",
-    bestTime: "Apr – Jun, Sep – Oct", upvotes: 534,
-    tip: { text: "Cross the Gravina gorge bridge to see the Sassi lit up from Murgia.", author: "@marta.camina" },
+    bestTime: "Apr – Jun, Sep – Oct",
     scene: s("desert", "#E8B88A", "#F8E8D6", "#A27A55", "#4A3826"),
   },
   {
@@ -188,8 +168,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 68, styles: ["adventure", "wellness", "events", "photography"],
     tagline: "Geothermal pools & the midnight sun",
     description: "Base for the Golden Circle, Iceland Airwaves and neighbourhood hot pots.",
-    bestTime: "Jun – Aug, Nov for Airwaves", upvotes: 690,
-    tip: { text: "Skip the Blue Lagoon; locals go to Sundhöllin for 1/10th the price.", author: "@fjordfinder" },
+    bestTime: "Jun – Aug, Nov for Airwaves",
     scene: s("mountain", "#2F3E5C", "#7FA3C9", "#3E5C6E", "#1A2733"),
   },
   {
@@ -197,8 +176,7 @@ export const DESTINATIONS: Destination[] = [
     hiddenGem: false, popularity: 77, styles: ["culture", "food", "fashion", "wellness"],
     tagline: "Souks, riads & Atlas day trips",
     description: "Jemaa el-Fnaa at dusk, hammams, and the Majorelle garden's electric blue.",
-    bestTime: "Mar – May, Oct – Nov", upvotes: 760,
-    tip: { text: "Hire a guide for the tanneries — the 'free' ones always lead to a shop.", author: "@sahara.sam" },
+    bestTime: "Mar – May, Oct – Nov",
     scene: s("desert", "#F7A072", "#FCE0CB", "#C0583A", "#5A2A1F"),
   },
 ];

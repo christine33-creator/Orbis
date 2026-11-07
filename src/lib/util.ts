@@ -90,3 +90,12 @@ export async function shareText(title: string, text: string): Promise<boolean> {
     return false;
   }
 }
+
+/** "Nov 9" or "Nov 9 – 12" for event dates (ISO timestamps). */
+export function fmtEventDate(startIso: string, endIso: string | null) {
+  const a = new Date(startIso);
+  const b = endIso ? new Date(endIso) : null;
+  const md = (d: Date) => `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  if (!b || b.getTime() - a.getTime() < 86400000) return md(a);
+  return a.getMonth() === b.getMonth() ? `${md(a)} – ${b.getDate()}` : `${md(a)} – ${md(b)}`;
+}
