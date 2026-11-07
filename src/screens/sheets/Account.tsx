@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Ban, BookOpen, Check, EyeOff, Flag, LogOut, Mail, ShieldCheck, Trash2, X } from "lucide-react";
 import { api } from "../../api";
 import { queryClient } from "../../api/hooks";
+import { resetLocalDb } from "../../api/local";
 import {
   useBlocks, useDestinations, useMe, useModQueue, useModerate, useProfile, useResolveReport, useToggleBlock,
   useUpdateProfile, useXpHistory,
@@ -203,6 +204,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <Button className="mt-3 w-full" disabled={confirm.trim().toLowerCase() !== "delete" || deleting} onClick={deleteAccount}>{deleting ? "Deleting…" : "Delete my account"}</Button>
         </Card>
       </section>
+      {api.mode === "local" && (
+        <Button variant="ghost" className="mt-6 w-full" onClick={() => { resetLocalDb(); window.location.reload(); }}>Reset demo to the start</Button>
+      )}
       <p className="mt-6 text-center text-[11.5px] text-faint">{APP_NAME} · {api.mode === "local" ? "Demo mode" : "Connected"}</p>
     </Sheet>
   );

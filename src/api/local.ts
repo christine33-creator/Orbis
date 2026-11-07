@@ -159,6 +159,97 @@ export function createLocalApi(): Api {
     setUser(user);
   }
 
+  /**
+   * Demo builds (VITE_DEMO_PERSONA=1) open already signed in as a pretend explorer with
+   * a lived-in account: saves, an upcoming trip, shared gems, a note, follows and XP.
+   */
+  function seedPersona() {
+    const uid = "demo-sophia";
+    const ago = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
+    const inDays = (d: number) => new Date(Date.now() + d * 86400_000).toISOString().slice(0, 10);
+    const visited = ["Japan", "Italy", "Portugal", "Spain", "Iceland", "Mexico", "Norway", "Georgia", "Morocco"];
+    db.users.push({ id: uid, email: "sophia@demo.orbis" });
+    db.profiles.push(baseProfile({
+      id: uid, handle: "sophiatravels", name: "Sophia Thorne", home: "Lisbon, Portugal", hue: 20, role: "moderator",
+      bio: "Alps enthusiast, specialty coffee hunter & architectural photographer. Always looking for unmapped trails.",
+      styles: ["culture", "photography", "adventure", "food"], preferences: { pace: "balanced", budget: "comfort", company: "duo" },
+      visited, watching: ["kyoto", "lisbon", "svaneti"], socials: { instagram: "sophia.lens", strava: "sophia.hikes" }, createdAt: ago(24 * 60),
+    }));
+    award(uid, "profile_completed");
+    visited.forEach((c) => award(uid, "country_stamped", c));
+
+    // Community: who she follows, who follows her.
+    for (const f of ["demo-chiyo", "demo-elena"]) {
+      db.follows.push({ followerId: uid, followeeId: f });
+      award(uid, "followed", f);
+    }
+    for (const f of ["demo-elena", "demo-kenji", "demo-marcos", "demo-mateo"]) db.follows.push({ followerId: f, followeeId: uid });
+
+    // Gems she found: one live with upvotes, one waiting for review because it has a link.
+    const live: Gem = {
+      id: "gem-sophia-graca", authorId: uid, author: null, destinationId: "lisbon", name: "Graça Tile Workshop",
+      description: "A tiny azulejo studio on a back street in Graça where you can paint your own tile and fire it the same week. The owner explains the patterns of every old façade nearby.",
+      tip: "Book the Saturday morning class and pick your tile up on Tuesday.", category: "experience", styles: ["culture", "photography"],
+      lat: 38.7165, lng: -9.1305, country: "Portugal", photos: [], status: "published", upvotes: 0, saves: 9, reports: 0, createdAt: ago(24 * 12),
+    };
+    const pending: Gem = {
+      id: "gem-sophia-cascais", authorId: uid, author: null, destinationId: "lisbon", name: "Sunrise Kayak to Boca do Inferno",
+      description: "Calm-water sunrise paddle along the Cascais cliffs to the sea arch, with almost nobody else on the water. Rentals at www.example.com",
+      tip: "Only on low-wind mornings; check the forecast the night before.", category: "nature", styles: ["adventure", "eco"],
+      lat: 38.6914, lng: -9.4316, country: "Portugal", photos: [], status: "pending", upvotes: 0, saves: 0, reports: 0, createdAt: ago(5),
+    };
+    db.gems.unshift(pending, live);
+    award(uid, "gem_published", live.id);
+    for (const v of ["demo-elena", "demo-chiyo", "demo-marcos", "demo-kenji"]) {
+      db.upvotes.push({ gemId: live.id, userId: v });
+      live.upvotes++;
+      award(uid, "upvote_received", `${live.id}:${v}`);
+    }
+    db.tips.unshift({
+      id: "tip-sophia", authorId: uid, author: null, destinationId: "kyoto", category: "Photography",
+      body: "For empty shots of the bamboo grove, enter from the Tenryū-ji north gate side at opening time.", status: "published", votes: 12, createdAt: ago(24 * 20),
+    });
+    award(uid, "tip_published", "tip-sophia");
+
+    // Saves.
+    const saves: [ItemType, string][] = [
+      ["destination", "kyoto"], ["gem", "gem-otagi"], ["gem", "gem-saga-toriimoto"], ["gem", "gem-kibune"], ["event", "event-kyoto-festival"],
+      ["destination", "svaneti"], ["gem", "gem-ushguli"], ["gem", "gem-yanaka"],
+    ];
+    saves.forEach(([itemType, itemId], i) => {
+      db.saves.push({ userId: uid, itemType, itemId, createdAt: ago(30 + i * 20) });
+      award(uid, "saved", `${itemType}:${itemId}`);
+    });
+
+    // An upcoming trip built from those saves, and a past one with check-ins.
+    const trip = (id: string, destinationId: string, title: string, style: Trip["style"], startDate: string, days: number, created: number) => {
+      db.trips.push({ id, userId: uid, destinationId, title, style, startDate, days, notes: "", createdAt: ago(created), updatedAt: ago(created) });
+      award(uid, "trip_created", id);
+    };
+    trip("trip-kyoto", "kyoto", "Kyoto Autumn Odyssey", "culture", inDays(12), 4, 26);
+    trip("trip-lisbon", "lisbon", "Lisbon Long Weekend", "vacation", inDays(-40), 2, 24 * 50);
+    const item = (tripId: string, day: number, position: number, time: string | null, title: string, notes: string, itemType: ItemType | null, itemId: string | null, done = false) => {
+      db.items.push({ id: `${tripId}-${day}-${position}`, tripId, day, position, time, title, notes, itemType, itemId, done });
+      if (done) award(uid, "stop_done", `${tripId}-${day}-${position}`);
+    };
+    item("trip-kyoto", 0, 0, "07:30", "Saga-Toriimoto Preserved Street", "Walk north out of the bamboo grove.", "gem", "gem-saga-toriimoto");
+    item("trip-kyoto", 0, 1, "10:00", "Otagi Nenbutsu-ji", "Shoes with grip for the mossy steps.", "gem", "gem-otagi");
+    item("trip-kyoto", 0, 2, "18:30", "Dinner in Pontochō", "Table for 2 booked, ref 4471.", null, null);
+    item("trip-kyoto", 1, 0, "06:30", "Fushimi Inari before the crowds", "Turn right at Yotsutsuji for the city view.", null, null);
+    item("trip-kyoto", 1, 1, "18:00", "Autumn Maple Light-ups", "", "event", "event-kyoto-festival");
+    item("trip-kyoto", 2, 0, "09:00", "Kibune Shrine", "Hike over from Kurama, lunch on the river platforms.", "gem", "gem-kibune");
+    item("trip-kyoto", 3, 0, "11:00", "Shinkansen to Tokyo", "Nozomi from Kyoto Station, car 7.", null, null);
+    item("trip-lisbon", 0, 0, "09:00", "Pastéis de nata in Belém", "", null, null, true);
+    item("trip-lisbon", 0, 1, "19:30", "Miradouro da Senhora do Monte", "Sunset with a bottle of vinho verde.", "gem", "gem-senhora-monte", true);
+    item("trip-lisbon", 1, 0, "11:00", "LX Factory bookshops", "", null, null);
+
+    // Spread the XP history over the past weeks so it reads naturally.
+    db.xp.filter((x) => x.userId === uid).forEach((x, i) => (x.createdAt = ago(4 + i * 14)));
+    db.currentUserId = uid;
+    persist();
+  }
+  if (import.meta.env.VITE_DEMO_PERSONA && db.users.length === 0) seedPersona();
+
   const api: Api = {
     mode: "local",
 

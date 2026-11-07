@@ -96,7 +96,7 @@ function Frame({ children }: { children: React.ReactNode }) {
 function DemoBanner() {
   return (
     <div className="bg-navy px-4 py-1.5 text-center text-[11px] font-semibold text-white/80">
-      Demo mode · data stays on this device
+      {import.meta.env.VITE_DEMO_PERSONA ? "Demo · signed in as a pretend explorer · changes stay on this device" : "Demo mode · data stays on this device"}
     </div>
   );
 }
