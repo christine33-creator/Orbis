@@ -112,7 +112,16 @@ function useXpToasts(xp: number | undefined) {
     if (before === undefined || xp <= before) return;
     const gained = xp - before;
     api.xpHistory().then((h) => {
-      const label = XP_LABELS[h[0]?.reason ?? ""] ?? "Explorer points earned";
+      // Name the biggest award among the newest events that make up this gain.
+      const batch: typeof h = [];
+      let sum = 0;
+      for (const e of h) {
+        if (sum >= gained) break;
+        batch.push(e);
+        sum += e.amount;
+      }
+      const top = [...batch].sort((a, b) => b.amount - a.amount)[0];
+      const label = XP_LABELS[top?.reason ?? ""] ?? "Explorer points earned";
       toast({ text: label, sub: `+${gained} explorer points`, tone: "xp" });
     }).catch(() => undefined);
   }, [xp, toast]);

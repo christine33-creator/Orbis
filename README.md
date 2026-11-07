@@ -2,38 +2,52 @@
 
 *See beyond the destination.*
 
-A community app for travel enthusiasts: a world map of destinations, hidden gems, worldwide social happenings, style-based itineraries, travel-buddy matching, and points & levels that reward people for contributing.
+Orbis is a social travel discovery platform that helps curious explorers discover destinations, experiences and global happenings, save what inspires them, and turn those discoveries into personalized travel plans.
 
-> Mobile-first web app (React + TypeScript + Vite + Tailwind). All data is local mock data behind a small store, so it runs with no backend.
+The MVP is built around one loop: **discover → save → plan**.
 
 ## Run it
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # type-check + production build into dist/
-SINGLE_FILE=1 npm run build   # everything inlined into one dist/index.html
 ```
 
-## What's in it
+```bash
+npm run dev
+```
 
-| Area | Where | What it does |
+With no configuration it runs in **demo mode**: a full working backend in your browser, with data stored on that device. To go live with real accounts, follow **[SETUP.md](SETUP.md)**.
+
+## What's in the MVP
+
+| Priority | Feature | Where |
 | --- | --- | --- |
-| **Onboarding** | `src/screens/Onboarding.tsx` | 6 steps: profile, travel styles & preferences, countries visited (live map), destinations on your radar, optional first trip, social handles. Ends with a generated **travel persona** and hidden gems picked for you. There's a "demo profile" shortcut too. |
-| **Explore** | `src/screens/Explore.tsx` | Search, category filters (Hidden Gems, Sports, Tech, Fashion, Art, Music, Food), Gems Radar top match, curated hidden-gem carousel (save/upvote), world map preview, **Global Pulse** social feed, explorers to follow, "Share a Gem". |
-| **World map** | `src/components/WorldMap.tsx` | Offline SVG world map (d3-geo + world-atlas). Pan/zoom, search, layers (all / gems / live events / my radar). Visited countries are shaded. |
-| **Groups** | `src/screens/Groups.tsx` | Buddy-match beacon for your active trip, companion matches ranked by **sync rate** (shared styles + overlapping dates, in `src/lib/match.ts`), connect / join requests, group expeditions, create your own group. |
-| **Itinerary** | `src/screens/Itinerary.tsx` | Trips generated per style (vacation, culture, adventure, sports, events, custom) in `src/data/activities.ts`. Day-by-day timeline, explorer secrets, reservations, check-ins, add/remove stops, re-plan a day, share, destination news radar, voted field notes. |
-| **Passport** | `src/screens/Passport.tsx` | Level/tier and XP, badges, passport stamps, your map, travel DNA, connected social accounts, following, and privacy (visibility, companion matching, live beacon). |
-| **Points** | `src/lib/progress.ts` | XP per action (share gem +50, field note +40, plan trip +60, join group +30…), 11 levels across 6 tiers (Wanderer → Summit Master), badge goals. |
-| **News** | bell icon → `NewsSheet` | Alerts, verified local intel and events for destinations on your radar. |
+| P0 | Map + discovery feed | `screens/Explore.tsx`, `screens/ExploreMap.tsx`, `components/MapView.tsx` (MapLibre + OpenFreeMap, offline fallback) |
+| P0 | Destinations & destination pages | `screens/sheets/Detail.tsx` |
+| P0 | Hidden Gems: submit with photos and map pin, upvote, save, credited to the finder | `screens/sheets/Forms.tsx` (`ShareGemSheet`), `components/Cards.tsx` |
+| P0 | Profiles & preferences | `screens/Onboarding.tsx`, edit profile, privacy settings |
+| P0 | Save destinations, gems and happenings | Saved tab, grouped by destination (`screens/Saved.tsx`) |
+| P0 | Itinerary builder | Trips tab (`screens/Trips.tsx`): build days from saves and suggestions, reorder, check in, share |
+| P0 | Rules-based suggestions, with the reason shown | `lib/suggest.ts` |
+| P0 | Moderation & safety | Report, block, auto-hold for links and contact details, auto-hide after 3 reports, moderation queue, rate limits, account deletion, photo location stripping |
+| P1 | Passport & XP | `screens/Passport.tsx`; XP is granted by the database so it can't be faked |
+| P1 | Global Pulse automation | `supabase/functions/sync-events` (Ticketmaster) |
+| P1 | Following | Profile pages |
+| P2 | Direct messaging, Buddy Beacon & groups | Not in this release. An earlier prototype of groups and buddy matching is in git history (commit `f09c0a5`) |
 
-State lives in `src/store/useApp.ts` (zustand, persisted to `localStorage`). Seed content is in `src/data/`.
+## How it's built
 
-## Next steps toward production
+- **App:** React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query, MapLibre GL.
+- **Backend:** Supabase (Postgres with row-level security, Auth, Storage, Edge Functions). See `supabase/migrations`.
+- **One API, two backends:** `src/api/types.ts` defines everything the UI needs. `src/api/supabase.ts` is the real implementation; `src/api/local.ts` is the demo backend with the same rules. `src/api/index.ts` picks one based on environment variables.
+- **Rules live in the database.** XP, counters, content status, rate limits and moderation are enforced by triggers and policies, so a modified client can't bypass them.
 
-- **Backend + auth:** replace `src/data/*` and the store's actions with API calls (Supabase/Firebase are quick fits). Real follows, chat, group membership and ID verification all need a server.
-- **Real news/events:** feed `NEWS`/`PULSE` from an events API or editorial CMS, keyed by destination.
-- **Imagery:** destination art is procedural SVG (`src/components/Scene.tsx`); swap for licensed photos or user uploads.
-- **Native app:** the components map cleanly onto React Native / Expo if you want App Store builds.
-- **Brand:** the name and slogan live in `APP_NAME` / `APP_SLOGAN` in `src/lib/util.ts`.
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the app locally |
+| `npm run build` | Type-check and build for production |
+| `npm test` | Unit tests |
+| `npm run test:db` | Apply migrations and seed to a throwaway Postgres 16 and run the security tests |
+| `npm run seed:gen` | Regenerate `supabase/seed.sql` from `src/data/` |

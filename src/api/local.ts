@@ -209,7 +209,9 @@ export function createLocalApi(): Api {
       }
       const wasOnboarded = p.onboarded;
       const before = new Set(p.visited);
-      Object.assign(p, patch);
+      // Same editable columns as the database grants; role and XP can't be set by the client.
+      const allowed = ["handle", "name", "home", "bio", "hue", "styles", "preferences", "visited", "watching", "socials", "visibility", "onboarded"] as const;
+      for (const k of allowed) if (patch[k] !== undefined) (p as unknown as Record<string, unknown>)[k] = patch[k];
       if (p.onboarded && !wasOnboarded) award(p.id, "profile_completed");
       for (const c of p.visited) if (!before.has(c)) award(p.id, "country_stamped", c);
       persist();
