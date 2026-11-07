@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Ban, BookOpen, Check, EyeOff, Flag, LogOut, Mail, ShieldCheck, Trash2, X } from "lucide-react";
 import { api } from "../../api";
+import { queryClient } from "../../api/hooks";
 import {
   useBlocks, useDestinations, useMe, useModQueue, useModerate, useProfile, useResolveReport, useToggleBlock,
   useUpdateProfile, useXpHistory,
@@ -76,7 +77,14 @@ export function AuthSheet({ reason, onClose }: { reason?: string; onClose: () =>
         </Card>
       ) : (
         <form onSubmit={submit} className="mt-5 space-y-3">
-          {local && <p className="rounded-2xl bg-chip p-3 text-[12.5px] text-muted">Demo mode: enter any email to create a local account. Nothing is sent and data stays on this device.</p>}
+          {local && (
+            <>
+              <Button type="button" variant="dark" className="w-full py-3.5" disabled={busy} onClick={() => run(async () => { await startDemoProfile(); onClose(); })}>
+                Explore with a ready-made demo profile
+              </Button>
+              <p className="rounded-2xl bg-chip p-3 text-[12.5px] text-muted">Or enter any email below to go through sign-up yourself. This is a demo: nothing is sent and data stays on this device.</p>
+            </>
+          )}
           <Field label="Email">
             <input id="auth-email" type="email" autoComplete="email" required className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           </Field>
@@ -104,6 +112,26 @@ export function AuthSheet({ reason, onClose }: { reason?: string; onClose: () =>
       )}
     </Sheet>
   );
+}
+
+/** Demo only: signs in as a pre-filled traveller with a couple of saves, skipping onboarding. */
+async function startDemoProfile() {
+  await api.sendMagicLink("sophia@demo.orbis");
+  const me = await api.getMyProfile();
+  if (me && !me.onboarded) {
+    await api.updateMyProfile({
+      handle: "sophiatravels", name: "Sophia Thorne", home: "Lisbon, Portugal", hue: 20,
+      bio: "Alps enthusiast, specialty coffee hunter & architectural photographer.",
+      styles: ["culture", "photography", "adventure", "food"],
+      preferences: { pace: "balanced", budget: "comfort", company: "duo" },
+      visited: ["Japan", "Italy", "Portugal", "Spain", "Iceland", "Mexico"], watching: ["kyoto", "lisbon"],
+      socials: { instagram: "sophia.lens" }, visibility: "public", onboarded: true,
+    });
+    await api.setSaved("destination", "kyoto", true);
+    await api.setSaved("gem", "gem-otagi", true);
+    await api.setSaved("event", "event-kyoto-festival", true);
+  }
+  queryClient.invalidateQueries();
 }
 
 /* ------------------------------------------------------------------ Settings */

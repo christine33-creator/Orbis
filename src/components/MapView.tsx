@@ -3,8 +3,9 @@ import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MlMap, StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre loads its worker from a file next to its own script, which bundling breaks.
-// Emit the (self-contained) worker as an asset and point MapLibre at it.
-import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+// Bundle the (self-contained) worker source and serve it from a blob: URL, which also
+// works on hosts whose security policy only allows same-page workers.
+import workerSource from "maplibre-gl/dist/maplibre-gl-worker.mjs?raw";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import worldData from "world-atlas/countries-110m.json";
@@ -20,7 +21,7 @@ export interface MapPoint {
 
 const COLORS = { destination: "#B8361C", gem: "#F26B4F", event: "#7C5CFF" };
 
-maplibregl.setWorkerUrl(workerUrl);
+maplibregl.setWorkerUrl(URL.createObjectURL(new Blob([workerSource], { type: "text/javascript" })));
 
 const STYLE_URL = import.meta.env.VITE_MAP_STYLE_URL || "https://tiles.openfreemap.org/styles/positron";
 
