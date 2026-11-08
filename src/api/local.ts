@@ -274,6 +274,27 @@ export function createLocalApi(): Api {
     async signOut() {
       setUser(null);
     },
+    onPasswordRecovery() {
+      return () => undefined;
+    },
+    authProviders: async () => ({ google: true }),
+    // The demo has no email: these succeed without sending anything.
+    async requestPasswordReset(email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new ApiError("invalidEmail");
+    },
+    async updatePassword() {
+      me();
+    },
+    async resendVerification() {},
+    async changeEmail(newEmail) {
+      const uid = me();
+      const clean = newEmail.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new ApiError("invalidEmail");
+      if (db.users.some((u) => u.email === clean && u.id !== uid)) throw new ApiError("emailTaken");
+      const u = db.users.find((x) => x.id === uid);
+      if (u) u.email = clean;
+      persist();
+    },
     async deleteAccount() {
       const uid = me();
       db.users = db.users.filter((u) => u.id !== uid);

@@ -55,6 +55,9 @@ function ConfiguredShell() {
   const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => setUser(user), [user, setUser]);
+  // Arriving from a password-reset email: ask for the new password straight away.
+  const openOverlay = useUi((s) => s.open);
+  useEffect(() => api.onPasswordRecovery(() => openOverlay({ type: "setPassword" })), [openOverlay]);
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 });
   }, [tab]);

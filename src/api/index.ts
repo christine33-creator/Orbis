@@ -24,7 +24,7 @@ function createUnconfiguredApi(): Api {
   return new Proxy({ mode: "local" } as Api, {
     get(target, prop) {
       if (prop === "mode") return target.mode;
-      if (prop === "onAuthChange") return () => () => undefined;
+      if (prop === "onAuthChange" || prop === "onPasswordRecovery") return () => () => undefined;
       return () => Promise.reject(new ApiError("generic"));
     },
   });

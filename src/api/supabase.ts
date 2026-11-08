@@ -80,8 +80,27 @@ function check<T>(res: { data: T | null; error: { message: string; code?: string
   return res.data as T;
 }
 
-const authError = (message: string) =>
-  message === "Invalid login credentials" ? new ApiError("badCredentials") : new ApiError("authFailed", { message });
+/** Supabase Auth error codes mapped to translatable messages. */
+const AUTH_CODES: Record<string, ErrorCode> = {
+  invalid_credentials: "badCredentials",
+  email_not_confirmed: "emailNotConfirmed",
+  weak_password: "weakPassword",
+  user_already_exists: "emailTaken",
+  email_exists: "emailTaken",
+  over_email_send_rate_limit: "tooManyRequests",
+  over_request_rate_limit: "tooManyRequests",
+  same_password: "samePassword",
+  email_address_invalid: "invalidEmail",
+  otp_expired: "linkExpired",
+  provider_disabled: "providerDisabled",
+};
+
+const authError = (e: { message: string; code?: string }) => {
+  if (e.code && AUTH_CODES[e.code]) return new ApiError(AUTH_CODES[e.code]);
+  if (e.message === "Invalid login credentials") return new ApiError("badCredentials");
+  if (/provider is not enabled|unsupported provider/i.test(e.message)) return new ApiError("providerDisabled");
+  return new ApiError("authFailed", { message: e.message });
+};
 
 export function createSupabaseApi(url: string, anonKey: string): Api {
   const sb: SupabaseClient<any, "public", any> = createClient(url, anonKey, {
@@ -113,23 +132,61 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     },
     async sendMagicLink(email) {
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } });
-      if (error) throw authError(error.message);
+      if (error) throw authError(error);
     },
     async signInWithPassword(email, password) {
       const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) throw authError(error.message);
+      if (error) throw authError(error);
     },
     async signUpWithPassword(email, password) {
       const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo() } });
-      if (error) throw authError(error.message);
+      if (error) throw authError(error);
       return { needsConfirmation: !data.session };
     },
     async signInWithGoogle() {
       const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
-      if (error) throw authError(error.message);
+      if (error) throw authError(error);
     },
     async signOut() {
       await sb.auth.signOut();
+    },
+    onPasswordRecovery(cb) {
+      const { data } = sb.auth.onAuthStateChange((event) => {
+        if (event === "PASSWORD_RECOVERY") cb();
+      });
+      return () => data.subscription.unsubscribe();
+    },
+    async authProviders() {
+      try {
+        const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: anonKey } });
+        const body = await res.json();
+        return { google: !!body?.external?.google };
+      } catch {
+        return { google: false };
+      }
+    },
+    async requestPasswordReset(email) {
+      const { error } = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: redirectTo() });
+      if (error) throw authError(error);
+    },
+    async updatePassword(newPassword, currentPassword) {
+      if (currentPassword !== undefined) {
+        const { data } = await sb.auth.getSession();
+        const email = data.session?.user.email;
+        if (!email) throw new ApiError("signInFirst");
+        const check = await sb.auth.signInWithPassword({ email, password: currentPassword });
+        if (check.error) throw new ApiError("wrongCurrentPassword");
+      }
+      const { error } = await sb.auth.updateUser({ password: newPassword });
+      if (error) throw authError(error);
+    },
+    async resendVerification(email) {
+      const { error } = await sb.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: redirectTo() } });
+      if (error) throw authError(error);
+    },
+    async changeEmail(newEmail) {
+      const { error } = await sb.auth.updateUser({ email: newEmail.trim() }, { emailRedirectTo: redirectTo() });
+      if (error) throw authError(error);
     },
     async deleteAccount() {
       check(await sb.rpc("delete_my_account"));
