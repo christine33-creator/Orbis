@@ -1,6 +1,7 @@
 // English source strings. Every other locale must provide the same keys (enforced by TypeScript).
 export const en = {
   brand: { slogan: "See beyond the destination" },
+  config: { title: "Orbis isn't connected yet", body: "This site is missing its server settings, so nothing can be saved. Please check back soon." },
   common: {
     save: "Save",
     saved: "Saved",

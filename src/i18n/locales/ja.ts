@@ -3,6 +3,7 @@ import type { Translation } from "../types";
 // Japanese. Machine-assisted; have a native speaker review before launch.
 export const ja: Translation = {
   brand: { slogan: "目的地の、その先へ" },
+  config: { title: "Orbisはまだ接続されていません", body: "サーバー設定がないため、データを保存できません。しばらくしてからもう一度お試しください。" },
   common: {
     save: "保存", saved: "保存済み", cancel: "キャンセル", delete: "削除", back: "戻る", close: "閉じる", report: "報告",
     block: "ブロック", unblock: "ブロック解除", follow: "フォロー", following: "フォロー中", anywhere: "どこでも", optional: "任意",

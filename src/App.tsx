@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient, useAuthUser, useMe } from "./api/hooks";
-import { api } from "./api";
+import { api, backendStatus } from "./api";
 import { useUi } from "./store/ui";
 import { BottomNav, Toasts, TopBar } from "./components/Chrome";
 import { Onboarding } from "./screens/Onboarding";
@@ -26,6 +26,27 @@ export function App() {
 }
 
 function Shell() {
+  if (backendStatus === "missing") return <NotConfigured />;
+  return <ConfiguredShell />;
+}
+
+/** Shown when a production build has no Supabase settings, instead of silently using browser storage. */
+function NotConfigured() {
+  const { t } = useTranslation();
+  return (
+    <Frame>
+      <div className="grid h-full place-items-center p-8 text-center">
+        <div>
+          <div className="mx-auto w-fit"><Logo size={44} /></div>
+          <h1 className="font-display mt-4 text-[24px] font-semibold">{t("config.title")}</h1>
+          <p className="mx-auto mt-2 max-w-[300px] text-[14px] text-muted">{t("config.body")}</p>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function ConfiguredShell() {
   const user = useAuthUser();
   const setUser = useUi((s) => s.setUser);
   const { data: me, isLoading: meLoading } = useMe();
@@ -99,7 +120,7 @@ function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-full justify-center">
       <div className="relative flex h-full w-full max-w-[440px] flex-col overflow-hidden bg-bg sm:shadow-2xl">
-        {api.mode === "local" && <DemoBanner />}
+        {backendStatus === "demo" && <DemoBanner />}
         {children}
       </div>
     </div>
