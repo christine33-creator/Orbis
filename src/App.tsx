@@ -10,7 +10,9 @@ import { Saved } from "./screens/Saved";
 import { Trips } from "./screens/Trips";
 import { Passport } from "./screens/Passport";
 import { Overlays } from "./screens/Overlays";
-import { XP_LABELS } from "./lib/rules";
+import { useTranslation } from "react-i18next";
+import i18n, { LANGUAGES, setLanguage, type LanguageCode } from "./i18n";
+import { en } from "./i18n/locales/en";
 import { Logo } from "./components/Chrome";
 
 const ExploreMap = lazy(() => import("./screens/ExploreMap"));
@@ -36,6 +38,17 @@ function Shell() {
     scroller.current?.scrollTo({ top: 0 });
   }, [tab]);
   useXpToasts(me?.xp);
+  // Follow the language saved on the profile when this device hasn't chosen one yet.
+  useEffect(() => {
+    const lang = me?.preferences.language;
+    let chosen: string | null = null;
+    try {
+      chosen = localStorage.getItem("orbis-lang");
+    } catch {
+      /* storage unavailable */
+    }
+    if (lang && !chosen && LANGUAGES.some((l) => l.code === lang)) setLanguage(lang as LanguageCode);
+  }, [me?.preferences.language]);
 
   if (user === undefined || (user && meLoading)) {
     return (
@@ -94,9 +107,10 @@ function Frame({ children }: { children: React.ReactNode }) {
 }
 
 function DemoBanner() {
+  const { t } = useTranslation();
   return (
     <div className="bg-navy px-4 py-1.5 text-center text-[11px] font-semibold text-white/80">
-      {import.meta.env.VITE_DEMO_PERSONA ? "Demo · signed in as a pretend explorer · changes stay on this device" : "Demo mode · data stays on this device"}
+      {import.meta.env.VITE_DEMO_PERSONA ? t("demo.personaBanner") : t("demo.banner")}
     </div>
   );
 }
@@ -121,8 +135,8 @@ function useXpToasts(xp: number | undefined) {
         sum += e.amount;
       }
       const top = [...batch].sort((a, b) => b.amount - a.amount)[0];
-      const label = XP_LABELS[top?.reason ?? ""] ?? "Explorer points earned";
-      toast({ text: label, sub: `+${gained} explorer points`, tone: "xp" });
+      const reason = top?.reason as keyof typeof en.xp | undefined;
+      toast({ text: i18n.t(reason && reason in en.xp ? `xp.${reason}` : "xp.earned"), sub: i18n.t("xp.plusPoints", { n: gained }), tone: "xp" });
     }).catch(() => undefined);
   }, [xp, toast]);
 }

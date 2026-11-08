@@ -33,15 +33,3 @@ export const XP_AWARDS = {
 } as const;
 
 export type XpReason = keyof typeof XP_AWARDS;
-
-export const XP_LABELS: Record<string, string> = {
-  profile_completed: "Profile completed",
-  country_stamped: "Passport stamp",
-  gem_published: "Hidden gem published",
-  tip_published: "Field note published",
-  upvote_received: "Your gem was upvoted",
-  saved: "Saved to your collection",
-  trip_created: "Trip created",
-  stop_done: "Checked in at a stop",
-  followed: "Followed an explorer",
-};

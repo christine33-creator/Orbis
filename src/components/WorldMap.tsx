@@ -6,6 +6,7 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 import worldData from "world-atlas/countries-110m.json";
 import { Minus, Plus, LocateFixed } from "lucide-react";
 import { cx } from "../lib/util";
+import { useTranslation } from "react-i18next";
 
 const W = 960;
 const H = 500;
@@ -53,6 +54,7 @@ interface Props {
 }
 
 export function WorldMap({ pins = [], visited = [], selected, onSelect, interactive = true, dark, className, showLabels, cover, initialZoom = 1 }: Props) {
+  const { t } = useTranslation();
   const [view, setView] = useState(() => ({ k: initialZoom, x: (W - W * initialZoom) / 2, y: (H - H * initialZoom) / 2 }));
   const drag = useRef<{ px: number; py: number; x: number; y: number; moved: boolean } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -110,7 +112,7 @@ export function WorldMap({ pins = [], visited = [], selected, onSelect, interact
         preserveAspectRatio={cover ? "xMidYMid slice" : "xMidYMid meet"}
         className={cx("block h-full w-full touch-none select-none", interactive && "cursor-grab active:cursor-grabbing")}
         role="img"
-        aria-label="World map of destinations"
+        aria-label={t("map.worldMap")}
         onPointerDown={(e) => {
           if (!interactive) return;
           (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -189,13 +191,13 @@ export function WorldMap({ pins = [], visited = [], selected, onSelect, interact
       </svg>
       {interactive && (
         <div className="absolute right-3 bottom-3 flex flex-col overflow-hidden rounded-2xl bg-card shadow-md">
-          <button aria-label="Zoom in" className="grid h-10 w-10 place-items-center hover:bg-chip" onClick={() => zoom(1.5)}>
+          <button aria-label={t("map.zoomIn")} className="grid h-10 w-10 place-items-center hover:bg-chip" onClick={() => zoom(1.5)}>
             <Plus size={18} />
           </button>
-          <button aria-label="Zoom out" className="grid h-10 w-10 place-items-center border-t border-line hover:bg-chip" onClick={() => zoom(1 / 1.5)}>
+          <button aria-label={t("map.zoomOut")} className="grid h-10 w-10 place-items-center border-t border-line hover:bg-chip" onClick={() => zoom(1 / 1.5)}>
             <Minus size={18} />
           </button>
-          <button aria-label="Reset view" className="grid h-10 w-10 place-items-center border-t border-line hover:bg-chip" onClick={() => setView(clamp({ k: initialZoom, x: (W - W * initialZoom) / 2, y: (H - H * initialZoom) / 2 }))}>
+          <button aria-label={t("map.reset")} className="grid h-10 w-10 place-items-center border-t border-line hover:bg-chip" onClick={() => setView(clamp({ k: initialZoom, x: (W - W * initialZoom) / 2, y: (H - H * initialZoom) / 2 }))}>
             <LocateFixed size={17} />
           </button>
         </div>

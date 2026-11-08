@@ -10,7 +10,9 @@ const TIERS = [
   { min: 7, name: "Pathfinder" },
   { min: 9, name: "Navigator" },
   { min: 11, name: "Summit Master" },
-];
+] as const;
+
+export type Tier = (typeof TIERS)[number]["name"];
 
 export function levelFor(xp: number) {
   let level = 1;
@@ -28,7 +30,7 @@ export function levelFor(xp: number) {
   };
 }
 
-export const tierFor = (level: number) => [...TIERS].reverse().find((t) => level >= t.min)!.name;
+export const tierFor = (level: number): Tier => [...TIERS].reverse().find((t) => level >= t.min)!.name;
 
 export interface BadgeInput {
   gemsShared: number;
@@ -38,10 +40,10 @@ export interface BadgeInput {
   following: number;
 }
 
-export const BADGES: { id: string; title: string; desc: string; icon: "gem" | "bookmark" | "globe" | "route" | "heart"; progress: (s: BadgeInput) => [number, number] }[] = [
-  { id: "gems", title: "Gem Finder", desc: "hidden gems shared", icon: "gem", progress: (s) => [s.gemsShared, 3] },
-  { id: "collector", title: "Collector", desc: "places saved", icon: "bookmark", progress: (s) => [s.saves, 10] },
-  { id: "planner", title: "Itinerary Architect", desc: "trips planned", icon: "route", progress: (s) => [s.tripsPlanned, 3] },
-  { id: "globe", title: "Globetrotter", desc: "countries stamped", icon: "globe", progress: (s) => [s.countries, 10] },
-  { id: "social", title: "Connector", desc: "explorers followed", icon: "heart", progress: (s) => [s.following, 5] },
+export const BADGES: { id: "gems" | "collector" | "planner" | "globe" | "social"; icon: "gem" | "bookmark" | "globe" | "route" | "heart"; progress: (s: BadgeInput) => [number, number] }[] = [
+  { id: "gems", icon: "gem", progress: (s) => [s.gemsShared, 3] },
+  { id: "collector", icon: "bookmark", progress: (s) => [s.saves, 10] },
+  { id: "planner", icon: "route", progress: (s) => [s.tripsPlanned, 3] },
+  { id: "globe", icon: "globe", progress: (s) => [s.countries, 10] },
+  { id: "social", icon: "heart", progress: (s) => [s.following, 5] },
 ];

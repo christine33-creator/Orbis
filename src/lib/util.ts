@@ -19,22 +19,18 @@ export function compact(n: number) {
   return String(n);
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+/** Current UI language for Intl formatting (set by src/i18n). */
+const lang = () => (typeof document !== "undefined" && document.documentElement.lang) || "en";
+const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(lang(), opts);
 
 export const parseDate = (iso: string) => new Date(iso + "T12:00:00");
 
 export function fmtShort(iso: string) {
-  const d = parseDate(iso);
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  return fmt({ month: "short", day: "numeric" }).format(parseDate(iso));
 }
 
 export function fmtRange(from: string, to: string) {
-  const a = parseDate(from);
-  const b = parseDate(to);
-  return a.getMonth() === b.getMonth()
-    ? `${MONTHS[a.getMonth()]} ${a.getDate()}–${b.getDate()}`
-    : `${fmtShort(from)} – ${fmtShort(to)}`;
+  return fmt({ month: "short", day: "numeric" }).formatRange(parseDate(from), parseDate(to));
 }
 
 export function addDays(iso: string, n: number) {
@@ -44,8 +40,7 @@ export function addDays(iso: string, n: number) {
 }
 
 export function fmtDayLong(iso: string) {
-  const d = parseDate(iso);
-  return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  return fmt({ weekday: "long", month: "short", day: "numeric" }).format(parseDate(iso));
 }
 
 export const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -91,11 +86,11 @@ export async function shareText(title: string, text: string): Promise<boolean> {
   }
 }
 
-/** "Nov 9" or "Nov 9 – 12" for event dates (ISO timestamps). */
+/** "Nov 9" or "Nov 9 – 12" for event dates (ISO timestamps), in the UI language. */
 export function fmtEventDate(startIso: string, endIso: string | null) {
   const a = new Date(startIso);
   const b = endIso ? new Date(endIso) : null;
-  const md = (d: Date) => `${MONTHS[d.getMonth()]} ${d.getDate()}`;
-  if (!b || b.getTime() - a.getTime() < 86400000) return md(a);
-  return a.getMonth() === b.getMonth() ? `${md(a)} – ${b.getDate()}` : `${md(a)} – ${md(b)}`;
+  const f = fmt({ month: "short", day: "numeric" });
+  if (!b || b.getTime() - a.getTime() < 86400000) return f.format(a);
+  return f.formatRange(a, b);
 }

@@ -10,6 +10,7 @@ import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import worldData from "world-atlas/countries-110m.json";
 import { LocateFixed } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export interface MapPoint {
   id: string;
@@ -74,6 +75,7 @@ export default function MapView({ points, selected, onSelect, pick, onPick, cent
   const latest = useRef({ points, selected, onSelect, onPick });
   latest.current = { points, selected, onSelect, onPick };
   const [offline, setOffline] = useState(false);
+  const { t } = useTranslation();
 
   const toGeoJson = () => ({
     type: "FeatureCollection" as const,
@@ -206,14 +208,14 @@ export default function MapView({ points, selected, onSelect, pick, onPick, cent
       <button
         type="button"
         onClick={locate}
-        aria-label="Go to my location"
+        aria-label={t("map.locate")}
         className="absolute right-3 bottom-8 grid h-10 w-10 place-items-center rounded-full bg-card shadow-md"
       >
         <LocateFixed size={18} />
       </button>
       {offline && (
         <span className="pointer-events-none absolute top-14 left-3 rounded-full bg-card/90 px-2.5 py-1 text-[11px] font-semibold text-muted shadow-sm">
-          Simplified map (tiles unavailable)
+          {t("map.simplified")}
         </span>
       )}
      </div>

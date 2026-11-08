@@ -103,14 +103,14 @@ export function createLocalApi(): Api {
     try {
       localStorage.setItem(KEY, JSON.stringify(db));
     } catch {
-      throw new ApiError("This device is out of storage for the demo. Remove some photos and try again.");
+      throw new ApiError("storageFull");
     }
   };
   // Return copies, like a network API would; handing out internal objects breaks change detection.
   const delay = <T>(v: T) => new Promise<T>((r) => setTimeout(() => r(structuredClone(v)), 60));
   const me = () => {
     const uid = db.currentUserId;
-    if (!uid) throw new ApiError("Please sign in first.");
+    if (!uid) throw new ApiError("signInFirst");
     return uid;
   };
   const profile = (uid: string) => db.profiles.find((p) => p.id === uid);
@@ -148,7 +148,7 @@ export function createLocalApi(): Api {
 
   function signIn(email: string) {
     const clean = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new ApiError("Enter a valid email address.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new ApiError("invalidEmail");
     let user = db.users.find((u) => u.email === clean);
     if (!user) {
       user = { id: id(), email: clean };
@@ -295,8 +295,8 @@ export function createLocalApi(): Api {
     async updateMyProfile(patch) {
       const p = profile(me())!;
       if (patch.handle !== undefined) {
-        if (!HANDLE_RE.test(patch.handle)) throw new ApiError("Handles use 3–30 lowercase letters, numbers, dots or underscores.");
-        if (db.profiles.some((x) => x.handle === patch.handle && x.id !== p.id)) throw new ApiError("That handle is taken.");
+        if (!HANDLE_RE.test(patch.handle)) throw new ApiError("handleFormat");
+        if (db.profiles.some((x) => x.handle === patch.handle && x.id !== p.id)) throw new ApiError("handleTaken");
       }
       const wasOnboarded = p.onboarded;
       const before = new Set(p.visited);
@@ -325,7 +325,7 @@ export function createLocalApi(): Api {
     },
     async createGem(input, photos) {
       const uid = me();
-      if (countToday(db.gems, (g) => g.authorId === uid) >= DAILY_LIMITS.gems) throw new ApiError("Daily limit reached. Please try again tomorrow.");
+      if (countToday(db.gems, (g) => g.authorId === uid) >= DAILY_LIMITS.gems) throw new ApiError("dailyLimit");
       const urls = await Promise.all(photos.slice(0, 6).map(blobToDataUrl));
       const gem: Gem = {
         ...input, id: id(), authorId: uid, author: null, photos: urls, upvotes: 0, saves: 0, reports: 0, createdAt: now(),
@@ -339,7 +339,7 @@ export function createLocalApi(): Api {
     async deleteGem(gid) {
       const uid = me();
       const g = db.gems.find((x) => x.id === gid);
-      if (!g || (g.authorId !== uid && !isMod())) throw new ApiError("You don't have permission to do that.");
+      if (!g || (g.authorId !== uid && !isMod())) throw new ApiError("permission");
       db.gems = db.gems.filter((x) => x.id !== gid);
       persist();
     },
@@ -347,10 +347,10 @@ export function createLocalApi(): Api {
     async setUpvote(gemId, on) {
       const uid = me();
       const g = db.gems.find((x) => x.id === gemId);
-      if (!g) throw new ApiError("That gem is no longer available.");
+      if (!g) throw new ApiError("notFound");
       const has = db.upvotes.some((u) => u.gemId === gemId && u.userId === uid);
       if (on && !has) {
-        if (g.authorId === uid) throw new ApiError("You cannot upvote your own gem.");
+        if (g.authorId === uid) throw new ApiError("ownGem");
         db.upvotes.push({ gemId, userId: uid });
         g.upvotes++;
         award(g.authorId, "upvote_received", `${gemId}:${uid}`);
@@ -370,8 +370,8 @@ export function createLocalApi(): Api {
       ),
     async createTip(destinationId, category, body) {
       const uid = me();
-      if (countToday(db.tips, (t) => t.authorId === uid) >= DAILY_LIMITS.tips) throw new ApiError("Daily limit reached. Please try again tomorrow.");
-      if (body.trim().length < 10) throw new ApiError("Notes need at least 10 characters.");
+      if (countToday(db.tips, (t) => t.authorId === uid) >= DAILY_LIMITS.tips) throw new ApiError("dailyLimit");
+      if (body.trim().length < 10) throw new ApiError("noteTooShort");
       const tip: Tip = { id: id(), authorId: uid, author: null, destinationId, category, body, votes: 0, createdAt: now(), status: needsReview(body) ? "pending" : "published" };
       db.tips.unshift(tip);
       if (tip.status === "published") award(uid, "tip_published", tip.id);
@@ -390,7 +390,7 @@ export function createLocalApi(): Api {
       if (!t) return;
       const has = db.tipVotes.some((v) => v.tipId === tipId && v.userId === uid);
       if (on && !has) {
-        if (t.authorId === uid) throw new ApiError("You cannot vote for your own note.");
+        if (t.authorId === uid) throw new ApiError("ownNote");
         db.tipVotes.push({ tipId, userId: uid });
         t.votes++;
       } else if (!on && has) {
@@ -422,7 +422,7 @@ export function createLocalApi(): Api {
       delay(db.currentUserId ? db.trips.filter((t) => t.userId === db.currentUserId).map(({ userId: _u, ...t }) => t).sort((a, b) => (a.startDate ?? "9").localeCompare(b.startDate ?? "9")) : []),
     async createTrip(t: NewTrip) {
       const uid = me();
-      if (countToday(db.trips, (x) => x.userId === uid) >= DAILY_LIMITS.trips) throw new ApiError("Daily limit reached. Please try again tomorrow.");
+      if (countToday(db.trips, (x) => x.userId === uid) >= DAILY_LIMITS.trips) throw new ApiError("dailyLimit");
       const trip: Owned<Trip> = { ...t, id: id(), userId: uid, notes: "", createdAt: now(), updatedAt: now() };
       db.trips.push(trip);
       award(uid, "trip_created", trip.id);
@@ -432,7 +432,7 @@ export function createLocalApi(): Api {
     },
     async updateTrip(tid, patch) {
       const t = db.trips.find((x) => x.id === tid && x.userId === me());
-      if (!t) throw new ApiError("Trip not found.");
+      if (!t) throw new ApiError("notFound");
       Object.assign(t, patch, { updatedAt: now() });
       persist();
     },
@@ -450,7 +450,7 @@ export function createLocalApi(): Api {
     async addTripItems(items) {
       const uid = me();
       for (const it of items) {
-        if (!db.trips.some((t) => t.id === it.tripId && t.userId === uid)) throw new ApiError("You don't have permission to do that.");
+        if (!db.trips.some((t) => t.id === it.tripId && t.userId === uid)) throw new ApiError("permission");
         const position = it.position ?? db.items.filter((i) => i.tripId === it.tripId && i.day === it.day).length;
         db.items.push({ ...it, id: id(), position, done: false });
       }
@@ -460,7 +460,7 @@ export function createLocalApi(): Api {
       const uid = me();
       const it = db.items.find((i) => i.id === iid);
       const trip = it && db.trips.find((t) => t.id === it.tripId && t.userId === uid);
-      if (!it || !trip) throw new ApiError("Stop not found.");
+      if (!it || !trip) throw new ApiError("notFound");
       const wasDone = it.done;
       Object.assign(it, patch);
       if (it.done && !wasDone) award(uid, "stop_done", it.id);
@@ -475,12 +475,12 @@ export function createLocalApi(): Api {
     listFollowing: async () => delay(db.currentUserId ? db.follows.filter((f) => f.followerId === db.currentUserId).map((f) => f.followeeId) : []),
     async setFollow(uid2, on) {
       const uid = me();
-      if (uid === uid2) throw new ApiError("You can't follow yourself.");
+      if (uid === uid2) throw new ApiError("followSelf");
       const target = profile(uid2);
       const has = db.follows.some((f) => f.followerId === uid && f.followeeId === uid2);
       if (on && !has) {
-        if (!target || target.visibility === "private") throw new ApiError("This profile is private.");
-        if (db.blocks.some((b) => b.blockerId === uid2 && b.blockedId === uid)) throw new ApiError("You don't have permission to do that.");
+        if (!target || target.visibility === "private") throw new ApiError("privateProfile");
+        if (db.blocks.some((b) => b.blockerId === uid2 && b.blockedId === uid)) throw new ApiError("permission");
         db.follows.push({ followerId: uid, followeeId: uid2 });
         award(uid, "followed", uid2);
       } else if (!on) db.follows = db.follows.filter((f) => !(f.followerId === uid && f.followeeId === uid2));
@@ -498,8 +498,8 @@ export function createLocalApi(): Api {
     },
     async report(targetType, targetId, reason, details) {
       const uid = me();
-      if (db.reports.some((r) => r.reporterId === uid && r.targetType === targetType && r.targetId === targetId)) throw new ApiError("You've already reported this.");
-      if (countToday(db.reports, (r) => r.reporterId === uid) >= DAILY_LIMITS.reports) throw new ApiError("Daily limit reached. Please try again tomorrow.");
+      if (db.reports.some((r) => r.reporterId === uid && r.targetType === targetType && r.targetId === targetId)) throw new ApiError("alreadyReported");
+      if (countToday(db.reports, (r) => r.reporterId === uid) >= DAILY_LIMITS.reports) throw new ApiError("dailyLimit");
       db.reports.push({ id: id(), reporterId: uid, targetType, targetId, reason, details, status: "open", createdAt: now() });
       const target = targetType === "gem" ? db.gems.find((g) => g.id === targetId) : targetType === "tip" ? db.tips.find((t) => t.id === targetId) : undefined;
       if (target && "reports" in target) {
@@ -512,7 +512,7 @@ export function createLocalApi(): Api {
     xpHistory: async () => delay(db.xp.filter((x) => x.userId === db.currentUserId).map(({ userId: _u, ...x }) => x)),
 
     async moderationQueue(): Promise<ModerationQueue> {
-      if (!isMod()) throw new ApiError("Only moderators can do this.");
+      if (!isMod()) throw new ApiError("moderatorsOnly");
       return delay({
         gems: db.gems.filter((g) => g.status === "pending" || g.status === "hidden").map(withAuthor),
         tips: db.tips.filter((t) => t.status === "pending" || t.status === "hidden").map(withAuthor),
@@ -520,9 +520,9 @@ export function createLocalApi(): Api {
       });
     },
     async moderate(targetType, tid, status: ContentStatus) {
-      if (!isMod()) throw new ApiError("Only moderators can do this.");
+      if (!isMod()) throw new ApiError("moderatorsOnly");
       const target = targetType === "gem" ? db.gems.find((g) => g.id === tid) : db.tips.find((t) => t.id === tid);
-      if (!target) throw new ApiError("That item no longer exists.");
+      if (!target) throw new ApiError("notFound");
       const was = target.status;
       target.status = status;
       if (status === "published") {
@@ -535,7 +535,7 @@ export function createLocalApi(): Api {
       persist();
     },
     async resolveReport(rid, status) {
-      if (!isMod()) throw new ApiError("Only moderators can do this.");
+      if (!isMod()) throw new ApiError("moderatorsOnly");
       const r = db.reports.find((x) => x.id === rid);
       if (r) r.status = status;
       persist();
@@ -548,7 +548,7 @@ function blobToDataUrl(b: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result));
-    r.onerror = () => reject(new ApiError("A photo couldn't be read."));
+    r.onerror = () => reject(new ApiError("photoRead"));
     r.readAsDataURL(b);
   });
 }

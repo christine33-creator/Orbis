@@ -1,15 +1,24 @@
 import type { Destination, Gem, ItemType, Profile, PulseEvent, Save, TravelStyle } from "../types";
+import { prettyCountry } from "./util";
 
 /**
  * Rules-based suggestions. Every suggestion carries the human-readable reasons that produced
  * it, so the UI can say why something was recommended. Pure functions; unit tested.
  */
 
+/** A translatable reason: `reasons.<key>` in the locale files, with its parameters. */
+export interface Reason {
+  key: "matchesStyles" | "onRadar" | "savedInCountry" | "fewCrowds" | "eventSoon" | "greatFor" | "nearInterest" | "upvotedBy" | "forFans" | "inCity" | "happeningSoon";
+  params?: Record<string, string | number>;
+  /** Travel styles to list in the sentence (translated by the UI). */
+  styles?: TravelStyle[];
+}
+
 export interface Suggestion {
   itemType: ItemType;
   id: string;
   score: number;
-  reasons: string[];
+  reasons: Reason[];
 }
 
 export interface SuggestInput {
@@ -20,11 +29,6 @@ export interface SuggestInput {
   events: PulseEvent[];
   now?: Date;
 }
-
-const STYLE_WORDS: Record<TravelStyle, string> = {
-  culture: "culture", photography: "photography", vacation: "slow travel", adventure: "adventure", sports: "sports",
-  events: "events", food: "food", nightlife: "nightlife", eco: "nature", tech: "tech", fashion: "design", wellness: "wellness",
-};
 
 /** Event categories that line up with each travel style. */
 const EVENT_STYLE: Record<string, TravelStyle[]> = {
@@ -78,70 +82,70 @@ export function suggest(input: SuggestInput, limit = 12): Suggestion[] {
 
   for (const d of input.destinations) {
     if (saved.has(`destination:${d.id}`)) continue;
-    const reasons: string[] = [];
+    const reasons: Reason[] = [];
     let score = 0;
     const match = overlap(d.styles, styles);
     if (match.length) {
       score += 12 * match.length;
-      reasons.push(`Matches your love of ${match.slice(0, 2).map((s) => STYLE_WORDS[s]).join(" & ")}`);
+      reasons.push({ key: "matchesStyles", styles: match.slice(0, 2) });
     }
     if (watching.has(d.id)) {
       score += 25;
-      reasons.push("On your radar");
+      reasons.push({ key: "onRadar" });
     }
     if (savedCountries.has(d.country) && !savedDest.has(d.id)) {
       score += 10;
-      reasons.push(`You saved places in ${d.country}`);
+      reasons.push({ key: "savedInCountry", params: { country: prettyCountry(d.country) } });
     }
     if (topSavedStyle && d.styles.includes(topSavedStyle)) score += 6;
     if (d.hiddenGem) {
       score += 8;
-      reasons.push("Few crowds");
+      reasons.push({ key: "fewCrowds" });
     }
     if (visited.has(d.country)) score -= 10;
     const soon = input.events.filter((e) => e.destinationId === d.id && new Date(e.startsAt).getTime() - now < 30 * 86400000);
     if (soon.length) {
       score += 8;
-      reasons.push(`${soon[0].title} coming up`);
+      reasons.push({ key: "eventSoon", params: { title: soon[0].title } });
     }
     if (score > 0) out.push({ itemType: "destination", id: d.id, score, reasons });
   }
 
   for (const g of input.gems) {
     if (g.status !== "published" || saved.has(`gem:${g.id}`)) continue;
-    const reasons: string[] = [];
+    const reasons: Reason[] = [];
     let score = 0;
     const match = overlap(g.styles, styles);
     if (match.length) {
       score += 10 * match.length;
-      reasons.push(`Great for ${match.slice(0, 2).map((s) => STYLE_WORDS[s]).join(" & ")}`);
+      reasons.push({ key: "greatFor", styles: match.slice(0, 2) });
     }
     if (g.destinationId && (savedDest.has(g.destinationId) || watching.has(g.destinationId))) {
       score += 22;
-      reasons.push(`Near ${destName(g.destinationId)}, which you're interested in`);
+      reasons.push({ key: "nearInterest", params: { place: destName(g.destinationId) ?? "" } });
     }
     score += Math.min(10, Math.log2(1 + g.upvotes) * 1.5);
-    if (g.upvotes >= 50) reasons.push(`${g.upvotes} explorers upvoted this`);
+    if (g.upvotes >= 50) reasons.push({ key: "upvotedBy", params: { count: g.upvotes } });
     if (score > 0) out.push({ itemType: "gem", id: g.id, score, reasons });
   }
 
   for (const e of input.events) {
     if (saved.has(`event:${e.id}`)) continue;
-    const reasons: string[] = [];
+    const reasons: Reason[] = [];
     let score = 0;
     const match = overlap(EVENT_STYLE[e.category] ?? [], styles);
     if (match.length) {
       score += 10;
-      reasons.push(`For ${STYLE_WORDS[match[0]]} fans`);
+      reasons.push({ key: "forFans", styles: [match[0]] });
     }
     if (e.destinationId && (savedDest.has(e.destinationId) || watching.has(e.destinationId))) {
       score += 20;
-      reasons.push(`In ${e.city}, which you're interested in`);
+      reasons.push({ key: "inCity", params: { city: e.city } });
     }
     const days = (new Date(e.startsAt).getTime() - now) / 86400000;
     if (days >= 0 && days <= 14) {
       score += 5;
-      reasons.push("Happening soon");
+      reasons.push({ key: "happeningSoon" });
     }
     if (score > 0) out.push({ itemType: "event", id: e.id, score, reasons });
   }

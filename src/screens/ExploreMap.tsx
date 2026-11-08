@@ -7,6 +7,7 @@ import { Card, Chip, Tag } from "../components/ui";
 import { GemImage, SaveButton } from "../components/Cards";
 import { Scene } from "../components/Scene";
 import { fmtEventDate, prettyCountry } from "../lib/util";
+import { useTranslation } from "react-i18next";
 
 type Layer = "all" | "gems" | "events" | "saved";
 
@@ -19,6 +20,7 @@ export default function ExploreMap() {
   const open = useUi((s) => s.open);
   const [layer, setLayer] = useState<Layer>("all");
   const [sel, setSel] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const savedKeys = new Set(saves.map((s) => `${s.itemType}:${s.itemId}`));
   const points = useMemo(() => {
@@ -39,17 +41,17 @@ export default function ExploreMap() {
     <div className="relative flex-1">
       <MapView points={points} selected={sel} onSelect={setSel} className="absolute inset-0" />
       <div className="no-scrollbar absolute inset-x-0 top-2 flex gap-2 overflow-x-auto px-4">
-        <Chip active={layer === "all"} onClick={() => setLayer("all")} icon={Layers}>Everything</Chip>
-        <Chip active={layer === "gems"} onClick={() => setLayer("gems")} icon={GemIcon}>Hidden gems</Chip>
-        <Chip active={layer === "events"} onClick={() => setLayer("events")} icon={Ticket}>Happenings</Chip>
-        <Chip active={layer === "saved"} onClick={() => setLayer("saved")} icon={Bookmark}>Saved</Chip>
+        <Chip active={layer === "all"} onClick={() => setLayer("all")} icon={Layers}>{t("map.everything")}</Chip>
+        <Chip active={layer === "gems"} onClick={() => setLayer("gems")} icon={GemIcon}>{t("map.gems")}</Chip>
+        <Chip active={layer === "events"} onClick={() => setLayer("events")} icon={Ticket}>{t("map.happenings")}</Chip>
+        <Chip active={layer === "saved"} onClick={() => setLayer("saved")} icon={Bookmark}>{t("map.saved")}</Chip>
       </div>
       <div className="absolute inset-x-4 bottom-32">
         {selPoint ? (
           <Preview kind={selPoint.kind} id={selPoint.id} onOpen={() => open({ type: selPoint.kind, id: selPoint.id })} />
         ) : (
           <div className="mx-auto w-fit rounded-full bg-card/95 px-4 py-2 text-[12.5px] font-semibold text-muted shadow-md">
-            <span className="text-accent">●</span> Destinations <span className="ml-2 text-coral">●</span> Gems <span className="ml-2 text-[#7C5CFF]">●</span> Happenings
+            <span className="text-accent">●</span> {t("map.legendDest")} <span className="ml-2 text-coral">●</span> {t("map.legendGems")} <span className="ml-2 text-[#7C5CFF]">●</span> {t("map.legendEvents")}
           </div>
         )}
       </div>
@@ -61,7 +63,7 @@ export default function ExploreMap() {
     const g = kind === "gem" ? gems.find((x) => x.id === id) : undefined;
     const e = kind === "event" ? events.find((x) => x.id === id) : undefined;
     const title = d?.name ?? g?.name ?? e?.title ?? "";
-    const sub = d ? d.tagline : g ? `${prettyCountry(g.country)} · ${g.upvotes} upvotes` : e ? `${e.city} · ${fmtEventDate(e.startsAt, e.endsAt)}` : "";
+    const sub = d ? d.tagline : g ? `${prettyCountry(g.country)} · ${t("map.upvotes", { count: g.upvotes })}` : e ? `${e.city} · ${fmtEventDate(e.startsAt, e.endsAt)}` : "";
     return (
       <Card className="flex items-center gap-3 p-3">
         <button onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
@@ -69,7 +71,7 @@ export default function ExploreMap() {
             {g ? <GemImage gem={g} /> : d ? <Scene scene={d.scene} /> : <div className="grid h-full w-full place-items-center bg-[#EDE8FF] text-[#7C5CFF]"><Ticket /></div>}
           </div>
           <div className="min-w-0">
-            <Tag tone={kind === "gem" ? "accent" : "neutral"}>{kind === "gem" ? "Hidden gem" : kind === "event" ? "Happening" : "Destination"}</Tag>
+            <Tag tone={kind === "gem" ? "accent" : "neutral"}>{kind === "gem" ? t("map.kindGem") : kind === "event" ? t("map.kindEvent") : t("map.kindDest")}</Tag>
             <div className="mt-1 truncate text-[16px] font-bold">{title}</div>
             <div className="flex items-center gap-1 truncate text-[12.5px] text-muted"><MapPin size={12} /> {sub}</div>
           </div>

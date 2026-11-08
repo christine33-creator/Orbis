@@ -129,6 +129,8 @@ export interface Preferences {
   pace: "slow" | "balanced" | "packed";
   budget: "shoestring" | "comfort" | "luxury";
   company: "solo" | "duo" | "group" | "family";
+  /** Preferred UI language code, e.g. "es". */
+  language?: string;
 }
 
 export type Role = "member" | "moderator" | "admin";
