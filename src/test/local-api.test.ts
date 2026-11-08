@@ -26,8 +26,8 @@ describe("local demo backend", () => {
     await signIn("a@example.com");
     await api.updateMyProfile({ handle: "alice" });
     await signIn("b@example.com");
-    await expect(api.updateMyProfile({ handle: "alice" })).rejects.toThrow(/taken/);
-    await expect(api.updateMyProfile({ handle: "No Spaces" })).rejects.toThrow(/Handles/);
+    await expect(api.updateMyProfile({ handle: "alice" })).rejects.toThrow("handleTaken");
+    await expect(api.updateMyProfile({ handle: "No Spaces" })).rejects.toThrow("handleFormat");
   });
 
   it("returns copies so callers can detect changes", async () => {
@@ -76,10 +76,10 @@ describe("local demo backend", () => {
   it("does not allow upvoting your own gem or reporting twice", async () => {
     await signIn("a@example.com");
     const g = await api.createGem(newGem, []);
-    await expect(api.setUpvote(g.id, true)).rejects.toThrow(/own gem/);
+    await expect(api.setUpvote(g.id, true)).rejects.toThrow("ownGem");
     await signIn("b@example.com");
     await api.report("gem", g.id, "spam", "");
-    await expect(api.report("gem", g.id, "spam", "")).rejects.toThrow(/already/);
+    await expect(api.report("gem", g.id, "spam", "")).rejects.toThrow("alreadyReported");
   });
 
   it("builds trips from saved items and awards a check-in once", async () => {
@@ -98,7 +98,7 @@ describe("local demo backend", () => {
     const t = await api.createTrip({ destinationId: null, title: "Mine", style: "custom", startDate: null, days: 1 });
     await signIn("b@example.com");
     expect(await api.listTrips()).toHaveLength(0);
-    await expect(api.addTripItems([{ tripId: t.id, day: 0, time: null, title: "x", notes: "", itemType: null, itemId: null }])).rejects.toThrow(/permission/);
+    await expect(api.addTripItems([{ tripId: t.id, day: 0, time: null, title: "x", notes: "", itemType: null, itemId: null }])).rejects.toThrow("permission");
   });
 
   it("blocking hides the other person's gems", async () => {

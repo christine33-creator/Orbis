@@ -1,3 +1,4 @@
+import type { en } from "../i18n/locales/en";
 import type {
   AuthUser, ContentStatus, Destination, Gem, ItemType, NewGem, NewTripItem, Profile, ProfilePatch, PulseEvent,
   Report, ReportReason, ReportTarget, Save, Tip, Trip, TripItem, XpEvent,
@@ -84,5 +85,12 @@ export interface Api {
   resolveReport(id: string, status: "resolved" | "dismissed"): Promise<void>;
 }
 
-/** An error whose message is safe to show to people. */
-export class ApiError extends Error {}
+/** Error codes map to `errors.<code>` in the locale files. */
+export type ErrorCode = keyof typeof en.errors;
+
+/** An error people can be shown, translated from its code by the UI. */
+export class ApiError extends Error {
+  constructor(readonly code: ErrorCode, readonly params?: Record<string, string>) {
+    super(code);
+  }
+}

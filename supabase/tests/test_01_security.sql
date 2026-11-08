@@ -197,3 +197,8 @@ reset role;
 select tests.ok(not exists (select 1 from public.profiles where id = :'b'), 'deleting the account removes the profile');
 select tests.ok(not exists (select 1 from public.trips), 'and their trips');
 select tests.ok(not exists (select 1 from public.gems where author_id = :'b'), 'and their gems');
+
+-- API surface (after hardening) ------------------------------------------------------------
+select tests.ok(not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('is_blocked', 'blocked_by')),
+  'policy helpers are not exposed in the public schema');
+select tests.ok(not has_function_privilege('anon', 'public.is_moderator()', 'execute'), 'anon cannot call is_moderator over the API');

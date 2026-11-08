@@ -42,6 +42,16 @@ With no configuration it runs in **demo mode**: a full working backend in your b
 - **One API, two backends:** `src/api/types.ts` defines everything the UI needs. `src/api/supabase.ts` is the real implementation; `src/api/local.ts` is the demo backend with the same rules. `src/api/index.ts` picks one based on environment variables.
 - **Rules live in the database.** XP, counters, content status, rate limits and moderation are enforced by triggers and policies, so a modified client can't bypass them.
 
+## Languages
+
+The interface is available in English, Spanish, French, Portuguese, German and Japanese. The app picks the device's language, people can change it in **Settings** (or the first onboarding step), and the choice is saved to their profile.
+
+- Strings live in `src/i18n/locales/<code>.ts`. English (`en.ts`) is the source of truth.
+- TypeScript fails the build if a language is missing a key, and `npm test` checks that every key used in the code exists and that each translation keeps the same `{{placeholders}}`.
+- To add a language: copy `es.ts` to a new file, translate it, and add it to `LANGUAGES` and `resources` in `src/i18n/index.ts`.
+- Translations other than English were machine-assisted. Have a native speaker review them before marketing in that language.
+- User content (gem descriptions, notes, bios) and curated destination text are shown as written; they are not translated.
+
 ## Scripts
 
 | Command | What it does |

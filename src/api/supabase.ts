@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Api, NewTrip } from "./types";
-import { ApiError } from "./types";
+import { ApiError, type ErrorCode } from "./types";
 import type {
   AuthorRef, Destination, Gem, Profile, PulseEvent, Report, Tip, Trip, TripItem, XpEvent,
 } from "../types";
@@ -58,18 +58,30 @@ const toReport = (r: Row): Report => ({
   details: r.details, status: r.status, createdAt: r.created_at,
 });
 
-/** Turns Postgres/PostgREST errors into messages people can act on. */
+/** Messages our database triggers raise on purpose (code P0001), mapped to error codes. */
+const RAISED: [RegExp, ErrorCode][] = [
+  [/daily limit/i, "dailyLimit"],
+  [/own gem/i, "ownGem"],
+  [/own note/i, "ownNote"],
+  [/too many stops/i, "tooManyStops"],
+  [/only moderators/i, "moderatorsOnly"],
+];
+
+/** Turns Postgres/PostgREST errors into codes the UI can translate. */
 function check<T>(res: { data: T | null; error: { message: string; code?: string } | null }): T {
   if (res.error) {
     const { message, code } = res.error;
-    if (code === "P0001") throw new ApiError(message); // raised deliberately by our triggers
-    if (code === "23505") throw new ApiError("You've already done that.");
-    if (code === "42501" || /row-level security/i.test(message)) throw new ApiError("You don't have permission to do that.");
-    if (code === "23514") throw new ApiError("Some details aren't valid. Check the form and try again.");
-    throw new ApiError("Something went wrong. Please try again.");
+    if (code === "P0001") throw new ApiError(RAISED.find(([re]) => re.test(message))?.[1] ?? "generic");
+    if (code === "23505") throw new ApiError("duplicate");
+    if (code === "42501" || /row-level security/i.test(message)) throw new ApiError("permission");
+    if (code === "23514") throw new ApiError("invalid");
+    throw new ApiError("generic");
   }
   return res.data as T;
 }
+
+const authError = (message: string) =>
+  message === "Invalid login credentials" ? new ApiError("badCredentials") : new ApiError("authFailed", { message });
 
 export function createSupabaseApi(url: string, anonKey: string): Api {
   const sb: SupabaseClient<any, "public", any> = createClient(url, anonKey, {
@@ -79,7 +91,7 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
   const uid = async () => {
     const { data } = await sb.auth.getSession();
     const id = data.session?.user.id;
-    if (!id) throw new ApiError("Please sign in first.");
+    if (!id) throw new ApiError("signInFirst");
     return id;
   };
 
@@ -101,20 +113,20 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     },
     async sendMagicLink(email) {
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } });
-      if (error) throw new ApiError(error.message);
+      if (error) throw authError(error.message);
     },
     async signInWithPassword(email, password) {
       const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) throw new ApiError(error.message === "Invalid login credentials" ? "Email or password is incorrect." : error.message);
+      if (error) throw authError(error.message);
     },
     async signUpWithPassword(email, password) {
       const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo() } });
-      if (error) throw new ApiError(error.message);
+      if (error) throw authError(error.message);
       return { needsConfirmation: !data.session };
     },
     async signInWithGoogle() {
       const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
-      if (error) throw new ApiError(error.message);
+      if (error) throw authError(error.message);
     },
     async signOut() {
       await sb.auth.signOut();
@@ -169,7 +181,7 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       for (const blob of photos.slice(0, 6)) {
         const path = `${id}/${crypto.randomUUID()}.jpg`;
         const { error } = await sb.storage.from("gem-photos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
-        if (error) throw new ApiError("A photo couldn't be uploaded. Try a smaller image.");
+        if (error) throw new ApiError("photoUpload");
         urls.push(sb.storage.from("gem-photos").getPublicUrl(path).data.publicUrl);
       }
       const row = check<Row>(

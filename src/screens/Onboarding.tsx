@@ -10,8 +10,11 @@ import { persona } from "../lib/persona";
 import { suggest } from "../lib/suggest";
 import { HANDLE_RE } from "../lib/rules";
 import { APP_NAME, cx, prettyCountry } from "../lib/util";
+import { useTranslation } from "react-i18next";
+import { reasonText } from "../i18n/reason";
+import { LanguagePicker } from "../components/LanguagePicker";
 
-const STEPS = ["About you", "Travel style", "Passport", "Radar", "Socials"];
+const STEP_COUNT = 5;
 
 type Draft = Required<Pick<Profile, "name" | "handle" | "home" | "bio" | "hue" | "styles" | "preferences" | "visited" | "watching" | "socials" | "visibility">>;
 
@@ -26,6 +29,7 @@ export function Onboarding({ profile }: { profile: Profile }) {
     socials: profile.socials, visibility: profile.visibility,
   });
   const set = (patch: Partial<Draft>) => setP((x) => ({ ...x, ...patch }));
+  const { t } = useTranslation();
 
   // Check handle availability as the person types.
   useEffect(() => {
@@ -48,13 +52,13 @@ export function Onboarding({ profile }: { profile: Profile }) {
     <div className="flex h-full flex-col">
       <div className="px-5 pt-5">
         <div className="flex items-center gap-3">
-          <button aria-label="Back" disabled={step === 0} onClick={() => setStep(step - 1)} className="grid h-10 w-10 place-items-center rounded-full bg-card shadow-sm disabled:opacity-30">
+          <button aria-label={t("onboarding.back")} disabled={step === 0} onClick={() => setStep(step - 1)} className="grid h-10 w-10 place-items-center rounded-full bg-card shadow-sm disabled:opacity-30">
             <ArrowLeft size={18} />
           </button>
           <div className="flex flex-1 gap-1.5">
-            {STEPS.map((_, i) => <div key={i} className={cx("h-1.5 flex-1 rounded-full", i <= step ? "bg-accent" : "bg-line")} />)}
+            {Array.from({ length: STEP_COUNT }, (_, i) => <div key={i} className={cx("h-1.5 flex-1 rounded-full", i <= step ? "bg-accent" : "bg-line")} />)}
           </div>
-          <span className="text-xs font-bold text-muted">{step + 1}/{STEPS.length}</span>
+          <span className="text-xs font-bold text-muted">{step + 1}/{STEP_COUNT}</span>
         </div>
       </div>
       <div className="no-scrollbar flex-1 overflow-y-auto px-5 pt-6 pb-6">
@@ -65,8 +69,8 @@ export function Onboarding({ profile }: { profile: Profile }) {
         {step === 4 && <StepSocials p={p} set={set} />}
       </div>
       <div className="border-t border-line bg-card px-5 py-3">
-        <Button className="w-full py-3.5" disabled={!canNext} onClick={() => (step === STEPS.length - 1 ? setReveal(true) : setStep(step + 1))} icon={step === STEPS.length - 1 ? Sparkles : ArrowRight}>
-          {step === STEPS.length - 1 ? "Build my profile" : "Continue"}
+        <Button className="w-full py-3.5" disabled={!canNext} onClick={() => (step === STEP_COUNT - 1 ? setReveal(true) : setStep(step + 1))} icon={step === STEP_COUNT - 1 ? Sparkles : ArrowRight}>
+          {step === STEP_COUNT - 1 ? t("onboarding.build") : t("onboarding.continue")}
         </Button>
       </div>
     </div>
@@ -86,13 +90,15 @@ function StepTitle({ eyebrow, title, sub }: { eyebrow: string; title: string; su
 }
 
 function StepBasics({ p, set, handleOk }: StepProps & { handleOk: boolean | null }) {
+  const { t } = useTranslation();
   return (
     <>
-      <StepTitle eyebrow="Step 1 · About you" title="Who's exploring?" sub="This is how other explorers will see you." />
+      <div className="mb-5"><LanguagePicker onChange={(language) => set({ preferences: { ...p.preferences, language } })} /></div>
+      <StepTitle eyebrow={t("onboarding.step1")} title={t("onboarding.whoTitle")} sub={t("onboarding.whoSub")} />
       <div className="mb-6 flex items-center gap-4">
         <Avatar name={p.name || "?"} hue={p.hue} size={72} ring />
         <div>
-          <div className="text-sm font-semibold">Profile colour</div>
+          <div className="text-sm font-semibold">{t("onboarding.colour")}</div>
           <div className="mt-2 flex gap-2">
             {[10, 40, 150, 200, 260, 320].map((h) => (
               <button key={h} aria-label={`Colour ${h}`} onClick={() => set({ hue: h })} className={cx("h-7 w-7 rounded-full", p.hue === h && "ring-2 ring-ink ring-offset-2")} style={{ background: `hsl(${h} 60% 50%)` }} />
@@ -101,10 +107,10 @@ function StepBasics({ p, set, handleOk }: StepProps & { handleOk: boolean | null
         </div>
       </div>
       <div className="space-y-4">
-        <Field label="Name">
+        <Field label={t("onboarding.name")}>
           <input className={inputCls} value={p.name} maxLength={80} onChange={(e) => set({ name: e.target.value })} placeholder="Sophia Thorne" autoFocus />
         </Field>
-        <Field label="Handle" hint={p.handle && !HANDLE_RE.test(p.handle) ? "3–30 characters: lowercase letters, numbers, dots or underscores." : handleOk === false ? "That handle is taken." : undefined}>
+        <Field label={t("onboarding.handle")} hint={p.handle && !HANDLE_RE.test(p.handle) ? t("errors.handleFormat") : handleOk === false ? t("errors.handleTaken") : undefined}>
           <div className="relative">
             <AtSign size={16} className="absolute top-1/2 left-4 -translate-y-1/2 text-faint" />
             <input className={cx(inputCls, "pr-10 pl-10")} value={p.handle} maxLength={30} onChange={(e) => set({ handle: e.target.value.replace(/[^a-z0-9_.]/gi, "").toLowerCase() })} placeholder="sophiatravels" />
@@ -113,11 +119,11 @@ function StepBasics({ p, set, handleOk }: StepProps & { handleOk: boolean | null
             </span>
           </div>
         </Field>
-        <Field label="Home base">
-          <input className={inputCls} value={p.home} maxLength={80} onChange={(e) => set({ home: e.target.value })} placeholder="Lisbon, Portugal" />
+        <Field label={t("onboarding.homeBase")}>
+          <input className={inputCls} value={p.home} maxLength={80} onChange={(e) => set({ home: e.target.value })} placeholder={t("onboarding.homePh")} />
         </Field>
-        <Field label="Bio" hint="Optional">
-          <textarea className={cx(inputCls, "min-h-[88px] resize-none")} maxLength={300} value={p.bio} onChange={(e) => set({ bio: e.target.value })} placeholder="Specialty coffee hunter & architectural photographer…" />
+        <Field label={t("onboarding.bio")} hint={t("common.optional")}>
+          <textarea className={cx(inputCls, "min-h-[88px] resize-none")} maxLength={300} value={p.bio} onChange={(e) => set({ bio: e.target.value })} placeholder={t("onboarding.bioPh")} />
         </Field>
       </div>
     </>
@@ -138,23 +144,24 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
 
 function StepStyles({ p, set }: StepProps) {
   const toggle = (s: TravelStyle) => set({ styles: p.styles.includes(s) ? p.styles.filter((x) => x !== s) : [...p.styles, s] });
+  const { t } = useTranslation();
   return (
     <>
-      <StepTitle eyebrow="Step 2 · Travel DNA" title="How do you like to travel?" sub="Pick at least two. Your suggestions are based on these." />
+      <StepTitle eyebrow={t("onboarding.step2")} title={t("onboarding.stylesTitle")} sub={t("onboarding.stylesSub")} />
       <div className="flex flex-wrap gap-2">
         {(Object.keys(STYLE_META) as TravelStyle[]).map((s) => (
-          <Chip key={s} active={p.styles.includes(s)} onClick={() => toggle(s)} icon={STYLE_META[s].icon}>{STYLE_META[s].label}</Chip>
+          <Chip key={s} active={p.styles.includes(s)} onClick={() => toggle(s)} icon={STYLE_META[s].icon}>{t(`styles.${s}`)}</Chip>
         ))}
       </div>
       <div className="mt-8 space-y-5">
-        <Field group label="Pace">
-          <Segmented value={p.preferences.pace} onChange={(pace) => set({ preferences: { ...p.preferences, pace } })} options={[{ v: "slow", l: "Slow" }, { v: "balanced", l: "Balanced" }, { v: "packed", l: "Packed" }]} />
+        <Field group label={t("onboarding.pace")}>
+          <Segmented value={p.preferences.pace} onChange={(pace) => set({ preferences: { ...p.preferences, pace } })} options={[{ v: "slow", l: t("onboarding.slow") }, { v: "balanced", l: t("onboarding.balanced") }, { v: "packed", l: t("onboarding.packed") }]} />
         </Field>
-        <Field group label="Budget">
-          <Segmented value={p.preferences.budget} onChange={(budget) => set({ preferences: { ...p.preferences, budget } })} options={[{ v: "shoestring", l: "Shoestring" }, { v: "comfort", l: "Comfort" }, { v: "luxury", l: "Luxury" }]} />
+        <Field group label={t("onboarding.budget")}>
+          <Segmented value={p.preferences.budget} onChange={(budget) => set({ preferences: { ...p.preferences, budget } })} options={[{ v: "shoestring", l: t("onboarding.shoestring") }, { v: "comfort", l: t("onboarding.comfort") }, { v: "luxury", l: t("onboarding.luxury") }]} />
         </Field>
-        <Field group label="Usually travel">
-          <Segmented value={p.preferences.company} onChange={(company) => set({ preferences: { ...p.preferences, company } })} options={[{ v: "solo", l: "Solo" }, { v: "duo", l: "Duo" }, { v: "group", l: "Group" }, { v: "family", l: "Family" }]} />
+        <Field group label={t("onboarding.company")}>
+          <Segmented value={p.preferences.company} onChange={(company) => set({ preferences: { ...p.preferences, company } })} options={[{ v: "solo", l: t("onboarding.solo") }, { v: "duo", l: t("onboarding.duo") }, { v: "group", l: t("onboarding.group") }, { v: "family", l: t("onboarding.family") }]} />
         </Field>
       </div>
     </>
@@ -163,12 +170,13 @@ function StepStyles({ p, set }: StepProps) {
 
 export function CountryPicker({ visited, onChange }: { visited: string[]; onChange: (v: string[]) => void }) {
   const [q, setQ] = useState("");
+  const { t } = useTranslation();
   const results = useMemo(() => COUNTRY_NAMES.filter((c) => !visited.includes(c) && prettyCountry(c).toLowerCase().includes(q.toLowerCase())).slice(0, q ? 30 : 18), [q, visited]);
   return (
     <>
       <label className="relative mb-3 block">
         <Search size={16} className="absolute top-1/2 left-4 -translate-y-1/2 text-faint" />
-        <input className={cx(inputCls, "pl-10")} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search countries" aria-label="Search countries" />
+        <input className={cx(inputCls, "pl-10")} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("onboarding.searchCountries")} aria-label={t("onboarding.searchCountries")} />
       </label>
       {visited.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
@@ -183,12 +191,13 @@ export function CountryPicker({ visited, onChange }: { visited: string[]; onChan
 }
 
 function StepVisited({ p, set }: StepProps) {
+  const { t } = useTranslation();
   return (
     <>
-      <StepTitle eyebrow="Step 3 · Passport" title="Where have you been?" sub="Each country stamps your passport for +15 explorer points." />
+      <StepTitle eyebrow={t("onboarding.step3")} title={t("onboarding.visitedTitle")} sub={t("onboarding.visitedSub")} />
       <Card className="mb-4 overflow-hidden">
         <WorldMap visited={p.visited} interactive={false} className="aspect-[1.9]" />
-        <div className="px-4 py-3 text-sm font-bold">{p.visited.length} countries</div>
+        <div className="px-4 py-3 text-sm font-bold">{t("onboarding.countriesCount", { count: p.visited.length })}</div>
       </Card>
       <CountryPicker visited={p.visited} onChange={(visited) => set({ visited })} />
     </>
@@ -197,6 +206,7 @@ function StepVisited({ p, set }: StepProps) {
 
 function StepRadar({ p, set }: StepProps) {
   const { data: destinations = [] } = useDestinations();
+  const { t } = useTranslation();
   const ranked = useMemo(
     () => suggest({ profile: { styles: p.styles, visited: p.visited, watching: [] }, saves: [], destinations, gems: [], events: [] }, 40)
       .map((s) => destinations.find((d) => d.id === s.id)!)
@@ -207,7 +217,7 @@ function StepRadar({ p, set }: StepProps) {
   const toggle = (id: string) => set({ watching: p.watching.includes(id) ? p.watching.filter((x) => x !== id) : [...p.watching, id] });
   return (
     <>
-      <StepTitle eyebrow="Step 4 · Radar" title="Which places are on your radar?" sub="Optional. You'll get happenings and suggestions for these." />
+      <StepTitle eyebrow={t("onboarding.step4")} title={t("onboarding.radarTitle")} sub={t("onboarding.radarSub")} />
       <div className="grid grid-cols-2 gap-3">
         {list.map((d) => {
           const on = p.watching.includes(d.id);
@@ -228,6 +238,7 @@ function StepRadar({ p, set }: StepProps) {
 }
 
 function StepSocials({ p, set }: StepProps) {
+  const { t } = useTranslation();
   const fields: { k: keyof Profile["socials"]; l: string; ph: string }[] = [
     { k: "instagram", l: "Instagram", ph: "sophia.lens" },
     { k: "x", l: "X / Twitter", ph: "sophiathorne" },
@@ -236,7 +247,7 @@ function StepSocials({ p, set }: StepProps) {
   ];
   return (
     <>
-      <StepTitle eyebrow="Step 5 · Socials & privacy" title="Share your socials" sub="Optional. Shown on your public profile." />
+      <StepTitle eyebrow={t("onboarding.step5")} title={t("onboarding.socialsTitle")} sub={t("onboarding.socialsSub")} />
       <div className="space-y-4">
         {fields.map((f) => (
           <Field key={f.k} label={f.l}>
@@ -246,8 +257,8 @@ function StepSocials({ p, set }: StepProps) {
             </div>
           </Field>
         ))}
-        <Field group label="Profile visibility" hint={p.visibility === "private" ? "Only you can see your profile. Your gems are shown without your name." : "Anyone can see your profile and follow you."}>
-          <Segmented value={p.visibility} onChange={(visibility) => set({ visibility })} options={[{ v: "public", l: "Public" }, { v: "private", l: "Private" }]} />
+        <Field group label={t("onboarding.visibility")} hint={p.visibility === "private" ? t("onboarding.privateHint") : t("onboarding.publicHint")}>
+          <Segmented value={p.visibility} onChange={(visibility) => set({ visibility })} options={[{ v: "public", l: t("onboarding.public") }, { v: "private", l: t("onboarding.private") }]} />
         </Field>
       </div>
     </>
@@ -257,6 +268,7 @@ function StepSocials({ p, set }: StepProps) {
 function Reveal({ p, saving, onDone }: { p: Draft; saving: boolean; onDone: () => void }) {
   const per = persona(p);
   const { data: destinations = [] } = useDestinations();
+  const { t } = useTranslation();
   const { data: gems = [] } = useGems();
   const { data: events = [] } = useEvents();
   const picks = suggest({ profile: p, saves: [], destinations, gems, events }, 20).filter((s) => s.itemType === "gem").slice(0, 3);
@@ -264,14 +276,14 @@ function Reveal({ p, saving, onDone }: { p: Draft; saving: boolean; onDone: () =
     <div className="no-scrollbar flex h-full flex-col overflow-y-auto">
       <div className="bg-navy px-6 pt-10 pb-16 text-center text-white">
         <Avatar name={p.name} hue={p.hue} size={88} ring className="mx-auto" />
-        <div className="eyebrow mt-5 text-coral">Your travel persona</div>
-        <h1 className="font-display mt-1 text-[32px] leading-tight font-semibold">{per.title}</h1>
-        <p className="mx-auto mt-2 max-w-[300px] text-sm text-white/75">{per.blurb}</p>
+        <div className="eyebrow mt-5 text-coral">{t("onboarding.persona")}</div>
+        <h1 className="font-display mt-1 text-[32px] leading-tight font-semibold">{t(`persona.${per}.title`)}</h1>
+        <p className="mx-auto mt-2 max-w-[300px] text-sm text-white/75">{t(`persona.${per}.blurb`)}</p>
       </div>
       <div className="relative z-10 -mt-8 flex-1 space-y-4 rounded-t-[32px] bg-bg px-5 pt-6 pb-6">
         {picks.length > 0 && (
           <div>
-            <div className="eyebrow mb-2 text-accent">Hidden gems picked for you</div>
+            <div className="eyebrow mb-2 text-accent">{t("onboarding.gemsForYou")}</div>
             <div className="space-y-2">
               {picks.map((s) => {
                 const g = gems.find((x) => x.id === s.id)!;
@@ -281,7 +293,7 @@ function Reveal({ p, saving, onDone }: { p: Draft; saving: boolean; onDone: () =
                     <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">{d && <Scene scene={d.scene} />}</div>
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-bold">{g.name}</div>
-                      <div className="truncate text-xs text-green">{s.reasons[0]}</div>
+                      <div className="truncate text-xs text-green">{reasonText(t, s.reasons[0])}</div>
                     </div>
                   </Card>
                 );
@@ -289,7 +301,7 @@ function Reveal({ p, saving, onDone }: { p: Draft; saving: boolean; onDone: () =
             </div>
           </div>
         )}
-        <Button className="w-full py-4" onClick={onDone} disabled={saving} icon={ArrowRight}>{saving ? "Saving…" : `Enter ${APP_NAME}`}</Button>
+        <Button className="w-full py-4" onClick={onDone} disabled={saving} icon={ArrowRight}>{saving ? t("onboarding.saving") : t("onboarding.enter", { app: APP_NAME })}</Button>
       </div>
     </div>
   );

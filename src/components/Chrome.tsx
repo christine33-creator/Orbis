@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { AlertCircle, Bell, Bookmark, Compass, ListChecks, Sparkles, Stamp, Map as MapIcon, Rows3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useUi, type Tab } from "../store/ui";
 import { useEvents, useMe, useSaves } from "../api/hooks";
 import { Avatar } from "./ui";
@@ -33,10 +34,11 @@ export function TopBar() {
   const view = useUi((s) => s.exploreView);
   const setView = useUi((s) => s.setExploreView);
   const updates = useUpdates();
+  const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-1.5 bg-bg/90 px-5 pt-4 pb-3 backdrop-blur">
-      <button onClick={() => setTab("explore")} className="flex items-center gap-2" aria-label={`${APP_NAME} home`}>
+      <button onClick={() => setTab("explore")} className="flex items-center gap-2" aria-label={t("top.home", { app: APP_NAME })}>
         <Logo />
         <span className="font-display text-[24px] font-semibold">{APP_NAME}</span>
       </button>
@@ -44,51 +46,54 @@ export function TopBar() {
       {tab === "explore" && (
         <button
           onClick={() => setView(view === "map" ? "feed" : "map")}
-          aria-label={view === "map" ? "Show feed" : "Show map"}
+          aria-label={view === "map" ? t("top.showFeed") : t("top.showMap")}
           className="flex h-10 items-center gap-1.5 rounded-full bg-card px-3 text-[13px] font-bold shadow-sm"
         >
-          {view === "map" ? <Rows3 size={17} /> : <MapIcon size={17} />} {view === "map" ? "Feed" : "Map"}
+          {view === "map" ? <Rows3 size={17} /> : <MapIcon size={17} />} {view === "map" ? t("top.feed") : t("top.map")}
         </button>
       )}
       {user && (
-        <button onClick={() => open({ type: "updates" })} aria-label={`Updates, ${updates.length}`} className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-card">
+        <button onClick={() => open({ type: "updates" })} aria-label={t("top.updates", { count: updates.length })} className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-card">
           <Bell size={21} />
           {updates.length > 0 && <span className="absolute top-2 right-2.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-bg" />}
         </button>
       )}
       {user && me ? (
-        <button onClick={() => setTab("passport")} aria-label="Your passport" className="ml-1">
+        <button onClick={() => setTab("passport")} aria-label={t("top.passport")} className="ml-1">
           <Avatar name={me.name || me.handle} hue={me.hue} size={36} />
         </button>
       ) : user === null ? (
         <button onClick={() => open({ type: "auth" })} className="ml-1 rounded-full bg-accent px-4 py-2 text-[13px] font-bold text-white">
-          Sign in
+          {t("top.signIn")}
         </button>
       ) : null}
     </header>
   );
 }
 
-const TABS: { id: Tab; label: string; icon: typeof Compass }[] = [
-  { id: "explore", label: "Explore", icon: Compass },
-  { id: "saved", label: "Saved", icon: Bookmark },
-  { id: "trips", label: "Trips", icon: ListChecks },
-  { id: "passport", label: "Passport", icon: Stamp },
+const TABS: { id: Tab; icon: typeof Compass }[] = [
+  { id: "explore", icon: Compass },
+  { id: "saved", icon: Bookmark },
+  { id: "trips", icon: ListChecks },
+  { id: "passport", icon: Stamp },
 ];
 
 export function BottomNav() {
   const tab = useUi((s) => s.tab);
   const setTab = useUi((s) => s.setTab);
   const { data: saves = [] } = useSaves();
+  const { t } = useTranslation();
   return (
     <nav className="absolute inset-x-0 bottom-0 z-30 px-4 pb-4">
       <div className="flex rounded-[28px] bg-card px-2 py-2 shadow-[0_8px_30px_rgba(20,20,30,0.12)]">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {TABS.map(({ id, icon: Icon }) => {
+          const label = t(`nav.${id}`);
+          return (
           <button
             key={id}
             onClick={() => setTab(id)}
             aria-current={tab === id ? "page" : undefined}
-            aria-label={id === "saved" && saves.length ? `${label}, ${saves.length} items` : label}
+            aria-label={id === "saved" && saves.length ? t("nav.savedCount", { count: saves.length }) : label}
             className={cx("relative flex flex-1 flex-col items-center gap-1 rounded-2xl py-1.5 transition", tab === id ? "text-accent" : "text-ink/80 hover:text-ink")}
           >
             <Icon size={21} strokeWidth={tab === id ? 2.4 : 1.9} />
@@ -97,7 +102,8 @@ export function BottomNav() {
               <span aria-hidden className="absolute top-0 right-[22%] min-w-4 rounded-full bg-accent px-1 text-[10px] leading-4 font-bold text-white">{saves.length}</span>
             )}
           </button>
-        ))}
+          );
+        })}
       </div>
     </nav>
   );

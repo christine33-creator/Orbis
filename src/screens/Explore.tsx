@@ -7,6 +7,8 @@ import { DestinationCard, EventRow, GemCard } from "../components/Cards";
 import { Chip, PULSE_META, SectionHeader } from "../components/ui";
 import { useRequireAuth } from "../components/auth";
 import type { PulseCategory } from "../types";
+import { useTranslation } from "react-i18next";
+import { reasonText } from "../i18n/reason";
 
 type Filter = "all" | "gems" | "places" | PulseCategory;
 const PULSE_FILTERS: PulseCategory[] = ["sports", "tech", "fashion", "art", "music", "food", "festival"];
@@ -21,6 +23,7 @@ export function Explore() {
   const requireAuth = useRequireAuth();
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
+  const { t } = useTranslation();
 
   const query = q.trim().toLowerCase();
   const has = (...f: (string | null | undefined)[]) => !query || f.some((x) => x?.toLowerCase().includes(query));
@@ -48,22 +51,22 @@ export function Explore() {
       <div className="space-y-3">
         <label className="flex items-center gap-3 rounded-full bg-card px-4 py-3 shadow-sm">
           <Search size={19} className="text-accent" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search places, gems and happenings" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted" aria-label="Search" />
-          {q && <button aria-label="Clear search" onClick={() => setQ("")}><X size={18} className="text-muted" /></button>}
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("explore.search")} className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted" aria-label={t("explore.search")} />
+          {q && <button aria-label={t("explore.clearSearch")} onClick={() => setQ("")}><X size={18} className="text-muted" /></button>}
         </label>
         <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">
-          <Chip active={filter === "all"} onClick={() => setFilter("all")}>All</Chip>
-          <Chip active={filter === "gems"} onClick={() => setFilter("gems")} icon={GemIcon}>Hidden Gems</Chip>
-          <Chip active={filter === "places"} onClick={() => setFilter("places")}>Destinations</Chip>
+          <Chip active={filter === "all"} onClick={() => setFilter("all")}>{t("explore.all")}</Chip>
+          <Chip active={filter === "gems"} onClick={() => setFilter("gems")} icon={GemIcon}>{t("explore.hiddenGems")}</Chip>
+          <Chip active={filter === "places"} onClick={() => setFilter("places")}>{t("explore.destinations")}</Chip>
           {PULSE_FILTERS.map((c) => (
-            <Chip key={c} active={filter === c} onClick={() => setFilter(c)} icon={PULSE_META[c].icon}>{PULSE_META[c].label}</Chip>
+            <Chip key={c} active={filter === c} onClick={() => setFilter(c)} icon={PULSE_META[c].icon}>{t(`pulse.${c}`)}</Chip>
           ))}
         </div>
       </div>
 
       {filter === "all" && !query && forYou.length > 0 && (
         <section>
-          <SectionHeader eyebrow={me ? "Picked for you" : "Popular right now"} title={<span className="flex items-center gap-2"><Sparkles size={22} className="text-accent" /> For You</span>} />
+          <SectionHeader eyebrow={me ? t("explore.pickedForYou") : t("explore.popularNow")} title={<span className="flex items-center gap-2"><Sparkles size={22} className="text-accent" /> {t("explore.forYou")}</span>} />
           <div className="no-scrollbar -mx-5 mt-4 flex snap-x items-start gap-3 overflow-x-auto px-5 pb-2">
             {forYou.slice(0, 8).map((s, i) => {
               if (s.itemType === "gem") {
@@ -82,7 +85,7 @@ export function Explore() {
 
       {showGems && (
         <section>
-          <SectionHeader eyebrow="From the community" title="Hidden Gems" action={`${shownGems.length} spots`} />
+          <SectionHeader eyebrow={t("explore.fromCommunity")} title={t("explore.hiddenGems")} action={t("explore.spots", { count: shownGems.length })} />
           {gemsLoading ? (
             <div className="mt-4 h-60 animate-pulse rounded-3xl bg-card" />
           ) : topGems.length ? (
@@ -90,7 +93,7 @@ export function Explore() {
               {topGems.slice(0, 12).map((g, i) => <GemCard key={g.id} gem={g} seed={i} />)}
             </div>
           ) : (
-            <Empty text={query ? "No gems match that search." : "No hidden gems yet. Be the first to share one."} />
+            <Empty text={query ? t("explore.noGemsSearch") : t("explore.noGemsYet")} />
           )}
         </section>
       )}
@@ -98,29 +101,29 @@ export function Explore() {
       {showEvents && (
         <section>
           <div className="flex items-end justify-between">
-            <h2 className="flex items-center gap-2 font-display text-[26px] font-semibold"><Radio size={22} className="text-accent" /> Global Pulse</h2>
+            <h2 className="flex items-center gap-2 font-display text-[26px] font-semibold"><Radio size={22} className="text-accent" /> {t("explore.globalPulse")}</h2>
           </div>
-          <p className="mt-1 text-sm text-muted">Reasons to go: what's happening around the world.</p>
+          <p className="mt-1 text-sm text-muted">{t("explore.pulseSub")}</p>
           <div className="mt-4 space-y-3">
-            {shownEvents.slice(0, 12).map((e) => <EventRow key={e.id} ev={e} reason={reasonsFor("event", e.id)?.[0]} />)}
-            {shownEvents.length === 0 && <Empty text="Nothing on in this category yet." />}
+            {shownEvents.slice(0, 12).map((e) => <EventRow key={e.id} ev={e} reason={reasonText(t, reasonsFor("event", e.id)?.[0]) || undefined} />)}
+            {shownEvents.length === 0 && <Empty text={t("explore.nothingInCategory")} />}
           </div>
         </section>
       )}
 
       {showPlaces && (
         <section>
-          <SectionHeader title="Destinations" action={`${shownPlaces.length}`} />
+          <SectionHeader title={t("explore.destinations")} action={`${shownPlaces.length}`} />
           <div className="no-scrollbar -mx-5 mt-4 flex snap-x gap-3 overflow-x-auto px-5 pb-2">
             {shownPlaces.map((d, i) => <DestinationCard key={d.id} d={d} seed={i} reasons={reasonsFor("destination", d.id)} />)}
           </div>
-          {shownPlaces.length === 0 && <Empty text="No destinations match that search." />}
+          {shownPlaces.length === 0 && <Empty text={t("explore.noDestinations")} />}
         </section>
       )}
 
       {filter === "all" && !query && newGems.length > 0 && (
         <section>
-          <SectionHeader title="Newly Shared" />
+          <SectionHeader title={t("explore.newlyShared")} />
           <div className="mt-4 space-y-3">
             {newGems.slice(0, 4).map((g, i) => <GemCard key={g.id} gem={g} seed={i + 3} wide />)}
           </div>
@@ -128,15 +131,15 @@ export function Explore() {
       )}
 
       <button
-        onClick={() => requireAuth("Sign in to share a hidden gem.", () => open({ type: "shareGem" }))}
+        onClick={() => requireAuth(t("explore.signInToShare"), () => open({ type: "shareGem" }))}
         className="flex w-full items-center gap-3 rounded-[24px] bg-navy p-3 text-left text-white shadow-lg"
       >
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent"><MapPinPlus size={20} /></div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-bold">Found somewhere special?</div>
-          <div className="text-xs text-white/70">Share it and earn +50 explorer points</div>
+          <div className="truncate text-[15px] font-bold">{t("explore.shareTitle")}</div>
+          <div className="text-xs text-white/70">{t("explore.shareSub")}</div>
         </div>
-        <span className="rounded-full bg-accent px-4 py-2.5 text-sm font-bold">Share Gem</span>
+        <span className="rounded-full bg-accent px-4 py-2.5 text-sm font-bold">{t("explore.shareCta")}</span>
       </button>
     </div>
   );

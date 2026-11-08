@@ -20,7 +20,8 @@ describe("suggest", () => {
     const out = suggest({ profile: { styles: ["adventure", "eco"], visited: [], watching: [] }, saves: [], destinations: DESTINATIONS, gems: [], events: [], now });
     const top = DESTINATIONS.find((d) => d.id === out[0].id)!;
     expect(top.styles).toEqual(expect.arrayContaining(["adventure"]));
-    expect(out[0].reasons.join(" ")).toMatch(/adventure|nature/);
+    expect(out[0].reasons[0]).toMatchObject({ key: "matchesStyles" });
+    expect(out[0].reasons[0].styles).toEqual(expect.arrayContaining(["adventure"]));
   });
 
   it("boosts gems near destinations the person saved", () => {
@@ -33,7 +34,7 @@ describe("suggest", () => {
     });
     const ids = out.filter((s) => s.itemType === "gem").map((s) => s.id);
     expect(ids[0]).toBe("near");
-    expect(out.find((s) => s.id === "near")!.reasons[0]).toMatch(/Lisbon/);
+    expect(out.find((s) => s.id === "near")!.reasons[0]).toEqual({ key: "nearInterest", params: { place: "Lisbon" } });
   });
 
   it("never suggests things already saved, or unpublished gems", () => {
@@ -48,7 +49,7 @@ describe("suggest", () => {
   it("surfaces events happening soon at places on the radar", () => {
     const out = suggest({ profile: { styles: [], visited: [], watching: ["lisbon"] }, saves: [], destinations: [], gems: [], events: [event({})], now });
     expect(out[0]).toMatchObject({ itemType: "event", id: "e" });
-    expect(out[0].reasons).toContain("Happening soon");
+    expect(out[0].reasons).toContainEqual({ key: "happeningSoon" });
   });
 
   it("works for signed-out visitors", () => {

@@ -7,6 +7,7 @@ import { Scene } from "../components/Scene";
 import { SignInPrompt } from "./SignInPrompt";
 import { fmtEventDate, prettyCountry } from "../lib/util";
 import type { Destination, Gem, ItemType, PulseEvent } from "../types";
+import { useTranslation } from "react-i18next";
 
 interface Row {
   itemType: ItemType;
@@ -27,8 +28,9 @@ export function Saved() {
   const { data: events = [] } = useEvents();
   const open = useUi((s) => s.open);
   const setTab = useUi((s) => s.setTab);
+  const { t } = useTranslation();
 
-  if (!user) return <SignInPrompt icon={Bookmark} title="Save what inspires you" body="Keep hidden gems, happenings and destinations in one place, then turn them into a trip." />;
+  if (!user) return <SignInPrompt icon={Bookmark} title={t("saved.promptTitle")} body={t("saved.promptBody")} />;
 
   const groups = new Map<string, { dest?: Destination; rows: Row[] }>();
   const push = (key: string, dest: Destination | undefined, row: Row) => {
@@ -43,7 +45,7 @@ export function Saved() {
       const g = gems.find((x) => x.id === s.itemId);
       if (!g) continue;
       const d = destinations.find((x) => x.id === g.destinationId);
-      push(d?.id ?? `country:${g.country}`, d, { itemType: "gem", itemId: g.id, title: g.name, sub: `Hidden gem · ${prettyCountry(g.country)}`, gem: g });
+      push(d?.id ?? `country:${g.country}`, d, { itemType: "gem", itemId: g.id, title: g.name, sub: t("saved.gemSub", { country: prettyCountry(g.country) }), gem: g });
     } else {
       const e = events.find((x) => x.id === s.itemId);
       if (!e) continue;
@@ -55,17 +57,17 @@ export function Saved() {
   return (
     <div className="space-y-6 pb-4">
       <div>
-        <h1 className="font-display text-[30px] font-semibold">Saved</h1>
-        <p className="text-[14px] text-muted">{saves.length} {saves.length === 1 ? "place" : "places"} · grouped by destination</p>
+        <h1 className="font-display text-[30px] font-semibold">{t("saved.title")}</h1>
+        <p className="text-[14px] text-muted">{t("saved.subtitle", { count: saves.length })}</p>
       </div>
 
       {isLoading && <div className="h-40 animate-pulse rounded-3xl bg-card" />}
       {!isLoading && saves.length === 0 && (
         <Card className="p-6 text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-accent-soft text-accent"><Bookmark size={28} /></div>
-          <h2 className="font-display mt-4 text-[22px] font-semibold">Nothing saved yet</h2>
-          <p className="mx-auto mt-1 max-w-[280px] text-[14px] text-muted">Tap the bookmark on any gem, happening or destination to keep it here.</p>
-          <Button className="mt-4" icon={Compass} onClick={() => setTab("explore")}>Start exploring</Button>
+          <h2 className="font-display mt-4 text-[22px] font-semibold">{t("saved.emptyTitle")}</h2>
+          <p className="mx-auto mt-1 max-w-[280px] text-[14px] text-muted">{t("saved.emptyBody")}</p>
+          <Button className="mt-4" icon={Compass} onClick={() => setTab("explore")}>{t("saved.startExploring")}</Button>
         </Card>
       )}
 
@@ -79,7 +81,7 @@ export function Saved() {
                 <MapPin size={16} className="shrink-0 text-accent" />
                 <h2 className="truncate text-[18px] font-bold">{label}</h2>
               </button>
-              <span className="shrink-0 text-[12px] font-semibold text-muted">{g.rows.length} saved</span>
+              <span className="shrink-0 text-[12px] font-semibold text-muted">{t("saved.countSaved", { count: g.rows.length })}</span>
             </div>
             {g.rows.map((r) => (
               <Card key={`${r.itemType}:${r.itemId}`} className="flex items-center gap-3 p-2.5">
@@ -98,7 +100,7 @@ export function Saved() {
                 </button>
                 {r.itemType !== "destination" && (
                   <button
-                    aria-label={`Add ${r.title} to a trip`}
+                    aria-label={t("saved.addToTrip", { name: r.title })}
                     onClick={() => open({ type: "addToTrip", itemType: r.itemType, itemId: r.itemId, title: r.title, destinationId: g.dest?.id })}
                     className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-chip"
                   >
@@ -110,7 +112,7 @@ export function Saved() {
             ))}
             {g.dest && (
               <Button variant="dark" className="w-full" icon={Route} onClick={() => open({ type: "newTrip", destinationId: g.dest!.id, items: seeds })}>
-                Plan a {g.dest.name} trip{seeds.length ? ` with ${seeds.length} saved stop${seeds.length > 1 ? "s" : ""}` : ""}
+                {seeds.length ? t("saved.planWith", { place: g.dest.name, count: seeds.length }) : t("saved.plan", { place: g.dest.name })}
               </Button>
             )}
           </section>

@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft, Bike, Camera, Coffee, Cpu, Leaf, Moon, Mountain, Palette, Shirt, Sparkles, Sun, Ticket, Trophy, Utensils, X,
   Landmark, Music, PartyPopper, Eye, Trees, Waves, Store, MapPin, type LucideIcon,
@@ -6,50 +7,50 @@ import {
 import type { GemCategory, PulseCategory, SceneKind, TravelStyle, TripStyle } from "../types";
 import { cx } from "../lib/util";
 
-export const STYLE_META: Record<TravelStyle, { label: string; icon: LucideIcon }> = {
-  culture: { label: "Culture", icon: Landmark },
-  photography: { label: "Photography", icon: Camera },
-  vacation: { label: "Vacation Calm", icon: Sun },
-  adventure: { label: "Backcountry & Hiking", icon: Mountain },
-  sports: { label: "Sports", icon: Trophy },
-  events: { label: "Events & Festivals", icon: Ticket },
-  food: { label: "Local Foodie", icon: Utensils },
-  nightlife: { label: "Nightlife", icon: Moon },
-  eco: { label: "Eco-Conscious", icon: Leaf },
-  tech: { label: "Tech Hubs", icon: Cpu },
-  fashion: { label: "Fashion & Design", icon: Shirt },
-  wellness: { label: "Wellness", icon: Coffee },
+export const STYLE_META: Record<TravelStyle, { icon: LucideIcon }> = {
+  culture: { icon: Landmark },
+  photography: { icon: Camera },
+  vacation: { icon: Sun },
+  adventure: { icon: Mountain },
+  sports: { icon: Trophy },
+  events: { icon: Ticket },
+  food: { icon: Utensils },
+  nightlife: { icon: Moon },
+  eco: { icon: Leaf },
+  tech: { icon: Cpu },
+  fashion: { icon: Shirt },
+  wellness: { icon: Coffee },
 };
 
-export const TRIP_STYLE_META: Record<TripStyle, { label: string; icon: LucideIcon; blurb: string }> = {
-  vacation: { label: "Vacation", icon: Sun, blurb: "Slow mornings, beaches, spas" },
-  culture: { label: "Culture", icon: Landmark, blurb: "Temples, museums, food markets" },
-  adventure: { label: "Adventure", icon: Mountain, blurb: "Hikes, water, wild places" },
-  sports: { label: "Sports", icon: Bike, blurb: "Matches, races, run clubs" },
-  events: { label: "Events", icon: Ticket, blurb: "Conferences, festivals, shows" },
-  custom: { label: "Custom", icon: Sparkles, blurb: "Start blank, build your own" },
+export const TRIP_STYLE_META: Record<TripStyle, { icon: LucideIcon }> = {
+  vacation: { icon: Sun },
+  culture: { icon: Landmark },
+  adventure: { icon: Mountain },
+  sports: { icon: Bike },
+  events: { icon: Ticket },
+  custom: { icon: Sparkles },
 };
 
-export const PULSE_META: Record<PulseCategory, { label: string; icon: LucideIcon }> = {
-  sports: { label: "Sports", icon: Trophy },
-  tech: { label: "Tech", icon: Cpu },
-  fashion: { label: "Fashion", icon: Shirt },
-  art: { label: "Art & Style", icon: Palette },
-  music: { label: "Music", icon: Music },
-  food: { label: "Food", icon: Utensils },
-  festival: { label: "Festival", icon: PartyPopper },
-  other: { label: "Happening", icon: Sparkles },
+export const PULSE_META: Record<PulseCategory, { icon: LucideIcon }> = {
+  sports: { icon: Trophy },
+  tech: { icon: Cpu },
+  fashion: { icon: Shirt },
+  art: { icon: Palette },
+  music: { icon: Music },
+  food: { icon: Utensils },
+  festival: { icon: PartyPopper },
+  other: { icon: Sparkles },
 };
 
-export const GEM_CATEGORY_META: Record<GemCategory, { label: string; icon: LucideIcon; scene: SceneKind }> = {
-  viewpoint: { label: "Viewpoint", icon: Eye, scene: "mountain" },
-  food: { label: "Food & drink", icon: Utensils, scene: "city" },
-  nature: { label: "Nature", icon: Trees, scene: "forest" },
-  beach: { label: "Beach & swim", icon: Waves, scene: "coast" },
-  culture: { label: "Culture", icon: Landmark, scene: "temple" },
-  shop: { label: "Shop & café", icon: Store, scene: "city" },
-  experience: { label: "Experience", icon: Sparkles, scene: "water" },
-  other: { label: "Other", icon: MapPin, scene: "mountain" },
+export const GEM_CATEGORY_META: Record<GemCategory, { icon: LucideIcon; scene: SceneKind }> = {
+  viewpoint: { icon: Eye, scene: "mountain" },
+  food: { icon: Utensils, scene: "city" },
+  nature: { icon: Trees, scene: "forest" },
+  beach: { icon: Waves, scene: "coast" },
+  culture: { icon: Landmark, scene: "temple" },
+  shop: { icon: Store, scene: "city" },
+  experience: { icon: Sparkles, scene: "water" },
+  other: { icon: MapPin, scene: "mountain" },
 };
 
 export function Avatar({ name, hue, size = 40, ring, className }: { name: string; hue: number; size?: number; ring?: boolean; className?: string }) {
@@ -169,6 +170,7 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boo
 
 /** Bottom sheet / full-screen overlay. */
 export function Sheet({ title, onClose, children, full, footer }: { title?: ReactNode; onClose: () => void; children: ReactNode; full?: boolean; footer?: ReactNode }) {
+  const { t } = useTranslation();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -185,13 +187,13 @@ export function Sheet({ title, onClose, children, full, footer }: { title?: Reac
       >
         <div className="flex items-center gap-3 px-5 pt-4 pb-3">
           {full ? (
-            <button onClick={onClose} aria-label="Back" className="grid h-10 w-10 place-items-center rounded-full bg-card shadow-sm">
+            <button onClick={onClose} aria-label={t("common.back")} className="grid h-10 w-10 place-items-center rounded-full bg-card shadow-sm">
               <ArrowLeft size={18} />
             </button>
           ) : null}
           <div className="min-w-0 flex-1 font-display text-xl font-semibold">{title}</div>
           {!full && (
-            <button onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full bg-chip">
+            <button onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 place-items-center rounded-full bg-chip">
               <X size={18} />
             </button>
           )}

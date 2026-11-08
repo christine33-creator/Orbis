@@ -4,6 +4,8 @@ import { api } from "./index";
 import type { NewTrip } from "./types";
 import type { AuthUser, ContentStatus, ItemType, NewGem, NewTripItem, ProfilePatch, ReportReason, ReportTarget, TripItem } from "../types";
 import { useUi } from "../store/ui";
+import i18n from "../i18n";
+import { errorText } from "../i18n/errors";
 
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1, refetchOnWindowFocus: false } },
@@ -48,7 +50,7 @@ export function useAuthUser() {
 
 const useToastError = () => {
   const toast = useUi((s) => s.toast);
-  return (e: unknown) => toast({ text: e instanceof Error ? e.message : "Something went wrong.", tone: "error" });
+  return (e: unknown) => toast({ text: errorText(i18n.t, e), tone: "error" });
 };
 
 // Queries ------------------------------------------------------------------------------
