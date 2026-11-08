@@ -3,6 +3,7 @@ import type { Translation } from "../types";
 // French. Machine-assisted; have a native speaker review before launch.
 export const fr: Translation = {
   brand: { slogan: "Voir au-delà de la destination" },
+  config: { title: "Orbis n'est pas encore connecté", body: "Ce site n'a pas encore sa configuration serveur : rien ne peut être enregistré. Revenez bientôt." },
   common: {
     save: "Enregistrer", saved: "Enregistré", cancel: "Annuler", delete: "Supprimer", back: "Retour", close: "Fermer", report: "Signaler",
     block: "Bloquer", unblock: "Débloquer", follow: "Suivre", following: "Abonné", anywhere: "N'importe où", optional: "Facultatif",

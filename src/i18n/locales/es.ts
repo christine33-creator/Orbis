@@ -3,6 +3,7 @@ import type { Translation } from "../types";
 // Spanish. Machine-assisted; have a native speaker review before launch.
 export const es: Translation = {
   brand: { slogan: "Mira más allá del destino" },
+  config: { title: "Orbis aún no está conectado", body: "A este sitio le falta la configuración del servidor, así que no se puede guardar nada. Vuelve pronto." },
   common: {
     save: "Guardar", saved: "Guardado", cancel: "Cancelar", delete: "Eliminar", back: "Atrás", close: "Cerrar", report: "Denunciar",
     block: "Bloquear", unblock: "Desbloquear", follow: "Seguir", following: "Siguiendo", anywhere: "Cualquier lugar", optional: "Opcional",

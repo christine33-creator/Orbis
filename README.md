@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-With no configuration it runs in **demo mode**: a full working backend in your browser, with data stored on that device. To go live with real accounts, follow **[SETUP.md](SETUP.md)**.
+`npm run dev` without configuration runs in **demo mode**: a full working backend in your browser, with data stored on that device. Production builds never do this: without Supabase settings they show a "not connected" screen. For a shareable demo build, set `VITE_DEMO_MODE=1`. To go live, follow **[SETUP.md](SETUP.md)**.
 
 ## What's in the MVP
 

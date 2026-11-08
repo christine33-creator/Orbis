@@ -54,7 +54,9 @@ VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=...
 ```
 
-On Vercel, the Supabase integration already adds `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`; the app reads those too, so nothing else is needed there. If you set variables by hand instead, use the `VITE_` names above.
+On Vercel, add the two variables under **Project → Settings → Environment Variables** for Production and Preview, then redeploy. Either naming works: `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, or the `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` names the Supabase integration creates (only if the integration is actually linked to this Vercel project).
+
+If the variables are missing, the production site shows "Orbis isn't connected yet" rather than silently saving data in visitors' browsers.
 
 The anon key is meant to be public. Everything is protected by the database's row-level security. **Never** put the `service_role` key in the app.
 
