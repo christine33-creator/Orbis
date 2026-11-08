@@ -1,0 +1,15 @@
+# Supabase CLI configuration. Only settings that differ from the defaults are listed.
+project_id = "orbis"
+
+[auth]
+# Update both for production (Dashboard → Authentication → URL Configuration).
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173", "http://localhost:4173"]
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[functions.sync-events]
+# Called by the scheduler with a shared secret header instead of a user JWT.
+verify_jwt = false
