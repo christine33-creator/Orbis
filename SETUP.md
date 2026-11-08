@@ -43,6 +43,8 @@ supabase db push
 delete from public.events where source = 'sample';
 ```
 
+> **Status for the Orbis project (Nov 2026):** migrations 1–5 and the seed are applied to the live project `anqlngiqsfhsyxpglfmt`, the site URL and redirect URLs are set to `https://orbis-alpha-green.vercel.app`, and the minimum password length is 8. The remaining steps below are the ones still to do in the dashboard.
+
 ## 2. Connect the app (Required)
 
 Copy `.env.example` to `.env.local` and fill in the two values from **Project Settings → API**:
@@ -51,6 +53,8 @@ Copy `.env.example` to `.env.local` and fill in the two values from **Project Se
 VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=...
 ```
+
+On Vercel, the Supabase integration already adds `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`; the app reads those too, so nothing else is needed there. If you set variables by hand instead, use the `VITE_` names above.
 
 The anon key is meant to be public. Everything is protected by the database's row-level security. **Never** put the `service_role` key in the app.
 
