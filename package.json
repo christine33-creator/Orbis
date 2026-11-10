@@ -10,7 +10,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:db": "supabase/tests/run.sh",
-    "seed:gen": "node scripts/gen-seed.ts"
+    "seed:gen": "node scripts/gen-seed.ts",
+    "site:build": "node scripts/build-site.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

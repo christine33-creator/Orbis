@@ -91,6 +91,15 @@ How moderation works:
 
 On Vercel or Netlify: import the GitHub repo, set build command `npm run build`, output directory `dist`, and add the two `VITE_SUPABASE_*` environment variables. Then point your domain at it and update the Site URL from step 3.
 
+## Waitlist (discoverorbis.com)
+
+- Signups from the marketing site are stored in `public.waitlist_signups`. Open **Table Editor → waitlist_signups** to see them, or export them as CSV from there.
+- **Fields:** email (unique, case-insensitive), first name, interests, note, source, UTM tags, referrer, language, consent time, and `user_id` once that person creates an app account.
+- **Writes:** only through `join_waitlist()`, which checks the email format, drops bot submissions (a hidden honeypot field) and allows 8 attempts per visitor per hour and 500 per hour overall. Visitor IPs are stored only as daily salted hashes.
+- **Reads:** the public API can't read the table, whether signed in or not.
+- **Removing someone:** delete their row in Table Editor.
+- Deploying the page: see `site/README.md`.
+
 ## 6. Automatic events (Optional)
 
 1. Get a free key at [developer.ticketmaster.com](https://developer.ticketmaster.com).

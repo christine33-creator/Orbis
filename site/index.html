@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1c2a2d">
+  <meta name="description" content="Discover hidden places, find extraordinary experiences, and meet people who share your curiosity. See beyond the destination with Orbis.">
+  <meta property="og:title" content="Orbis — See beyond the destination">
+  <meta property="og:description" content="A social travel discovery companion: hidden gems, global happenings and fellow explorers.">
+  <title>Orbis — See beyond the destination</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#1c2a2d; --ink2:#263a3a; --paper:#f8f7f1; --sage:#7d9484; --sage-light:#e0e8de; --terra:#c2775b;
+      --terra-light:#d5a18b; --sand:#ebe2d0; --muted:#687570; --white:#fffefa; --line:rgba(28,42,45,.14);
+      --serif:"Fraunces",Georgia,"Times New Roman",serif;
+      --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+      --ease:cubic-bezier(.2,.8,.2,1);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    button,input,textarea{font:inherit}
+    :focus-visible{outline:2px solid var(--terra);outline-offset:3px}
+    .wrap{width:min(1160px,calc(100% - 48px));margin:auto}
+    h1,h2,h3,p{margin-top:0}
+
+    /* Nav */
+    .nav{position:sticky;top:0;z-index:20;transition:background .3s,box-shadow .3s}
+    .nav.scrolled{background:rgba(28,42,45,.92);backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(0,0,0,.15)}
+    .nav-inner{height:76px;display:flex;align-items:center;justify-content:space-between}
+    .brand{font-size:21px;font-weight:700;letter-spacing:.16em;color:var(--paper)}
+    .brand span{color:var(--terra)}
+    .nav-links{display:flex;gap:28px;align-items:center;font-size:13px;color:#c9d4cc}
+    .nav-links a:not(.nav-cta):hover{color:#fff}
+    .nav-cta,.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:13px 22px;background:var(--terra);color:#fff;font-size:13px;font-weight:650;transition:transform .2s var(--ease),background .2s,box-shadow .2s;border:0;cursor:pointer}
+    .nav-cta:hover,.button:hover{background:#d18a6d;transform:translateY(-2px);box-shadow:0 10px 24px rgba(194,119,91,.35)}
+
+    /* Hero */
+    .hero{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 75% 40%,#2b4442 0%,var(--ink) 55%);color:var(--paper);border-radius:0 0 34px 34px;margin-top:-76px;padding-top:76px}
+    .hero-inner{min-height:680px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:20px;padding:40px 0 70px}
+    .eyebrow{font-size:11px;letter-spacing:.19em;text-transform:uppercase;font-weight:700;color:var(--sage-light);display:inline-flex;align-items:center;gap:10px}
+    .eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--terra);box-shadow:0 0 0 0 rgba(194,119,91,.7);animation:pulse 2.2s infinite}
+    h1{font-family:var(--serif);font-weight:400;font-size:clamp(52px,7vw,92px);line-height:.98;letter-spacing:-.04em;margin:24px 0}
+    h1 em{color:var(--terra-light);font-style:italic}
+    .rotator{display:block;height:1.05em;overflow:hidden;position:relative}
+    .rotator span{display:block;transition:transform .7s var(--ease),opacity .7s}
+    .hero-copy{font-size:17px;line-height:1.75;color:#d4ddd5;max-width:500px;margin-bottom:30px}
+    .hero-actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+    .text-link{font-size:13px;color:#d4ddd5;border-bottom:1px solid #73857a;padding-bottom:3px;transition:color .2s,border-color .2s}
+    .text-link:hover{color:#fff;border-color:var(--terra)}
+    .hero-note{font-size:12px;color:#9eafa4;margin-top:26px}
+    .globe-wrap{position:relative;aspect-ratio:1;width:min(560px,100%);justify-self:center}
+    #globe{width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y}
+    #globe:active{cursor:grabbing}
+    .float-card{position:absolute;background:rgba(248,247,241,.96);color:var(--ink);padding:12px 15px;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.25);font-size:12px;animation:float 6s ease-in-out infinite;max-width:210px}
+    .float-card strong{display:block;font-size:13px;margin-bottom:2px}
+    .float-card small{color:var(--muted)}
+    .fc-one{left:-2%;bottom:14%}
+    .fc-two{right:-2%;top:12%;animation-delay:-3s}
+    .fc-chip{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--terra);margin-bottom:4px}
+
+    /* Ticker */
+    .ticker{overflow:hidden;border-top:1px solid rgba(224,232,222,.12);padding:16px 0;mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+    .ticker-track{display:flex;gap:36px;width:max-content;animation:scroll 40s linear infinite;font-family:var(--serif);font-size:20px;color:#b9c8bc;white-space:nowrap}
+    .ticker-track span::after{content:"✦";color:var(--terra);margin-left:36px;font-size:12px;vertical-align:middle}
+
+    /* Sections */
+    .section{padding:110px 0}
+    .section-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.18em;font-weight:700;color:var(--sage)}
+    .section-title{font-family:var(--serif);font-weight:400;font-size:clamp(38px,4.7vw,60px);line-height:1.05;letter-spacing:-.035em;max-width:760px;margin:16px 0 18px}
+    .section-intro{max-width:620px;color:var(--muted);font-size:16px;line-height:1.8}
+    .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
+    .pillar{padding:28px 26px 30px;border:1px solid var(--line);border-radius:20px;min-height:220px;background:rgba(255,254,250,.6);transition:transform .35s var(--ease),box-shadow .35s,background .35s;position:relative;overflow:hidden}
+    .pillar::before{content:"";position:absolute;inset:auto -40% -60% auto;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(194,119,91,.18),transparent 70%);opacity:0;transition:opacity .4s}
+    .pillar:hover{transform:translateY(-6px);box-shadow:0 22px 50px rgba(28,42,45,.1);background:var(--white)}
+    .pillar:hover::before{opacity:1}
+    .pillar-num{font-family:var(--serif);font-size:30px;color:var(--terra)}
+    .pillar h3{font-size:19px;margin:22px 0 8px}
+    .pillar p{font-size:14px;color:var(--muted);line-height:1.75;margin:0}
+
+    .split{background:var(--sage-light);padding:100px 0}
+    .split-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:70px;align-items:center}
+    .map-card{min-height:440px;border-radius:26px;background:#d6e0d5;position:relative;overflow:hidden}
+    .map-card svg{position:absolute;inset:0;width:100%;height:100%}
+    .route-path{stroke:var(--terra);stroke-width:3;fill:none;stroke-linecap:round;stroke-dasharray:6 10;animation:dash 18s linear infinite}
+    .map-label{position:absolute;background:var(--white);border-radius:12px;padding:10px 13px;font-size:11.5px;box-shadow:0 10px 26px rgba(49,75,59,.14);transition:transform .3s var(--ease)}
+    .map-label:hover{transform:translateY(-4px) scale(1.03)}
+    .map-label b{display:block;font-size:12.5px}
+    .label-a{left:8%;top:14%}.label-b{right:7%;top:40%}.label-c{left:28%;bottom:10%}
+    .feature-list{display:grid;gap:22px;margin-top:34px}
+    .feature{display:grid;grid-template-columns:38px 1fr;gap:14px}
+    .feature-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--paper);color:var(--terra);font-size:15px;transition:transform .3s var(--ease),background .3s,color .3s}
+    .feature:hover .feature-icon{transform:rotate(-12deg) scale(1.1);background:var(--terra);color:#fff}
+    .feature h3{font-size:15.5px;margin:2px 0 4px}
+    .feature p{font-size:14px;color:var(--muted);margin:0;line-height:1.65}
+
+    .pulse{background:var(--ink);color:var(--paper);padding:100px 0;position:relative;overflow:hidden}
+    .pulse .section-kicker{color:#b9c8bc}.pulse .section-intro{color:#bdc9c1}
+    .pulse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:46px}
+    .pulse-card{border:1px solid rgba(224,232,222,.16);border-radius:18px;padding:22px 20px;min-height:170px;background:rgba(255,255,255,.035);position:relative;overflow:hidden;transition:transform .35s var(--ease),border-color .35s}
+    .pulse-card::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--terra);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+    .pulse-card:hover{transform:translateY(-6px);border-color:rgba(213,161,139,.5)}
+    .pulse-card:hover::after{transform:scaleX(1)}
+    .pulse-card span{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--terra-light)}
+    .pulse-card h3{font-family:var(--serif);font-size:23px;font-weight:400;margin:18px 0 8px}
+    .pulse-card p{font-size:13px;color:#aebcb2;margin:0}
+    .pulse-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(194,119,91,.16),transparent 65%);right:-200px;top:-200px;pointer-events:none}
+
+    .community{padding:110px 0}
+    .community-grid{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+    .passport{background:var(--sand);border-radius:24px;padding:34px;transform:rotate(1.5deg);box-shadow:0 24px 60px rgba(28,42,45,.1);transition:transform .5s var(--ease)}
+    .passport:hover{transform:rotate(0) translateY(-6px)}
+    .passport-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(28,42,45,.18);padding-bottom:20px}
+    .passport-top strong{letter-spacing:.14em;font-size:12px}
+    .passport-top span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+    .passport h3{font-family:var(--serif);font-weight:400;font-size:32px;margin:25px 0 7px}
+    .passport p{font-size:13px;color:var(--muted)}
+    .stamps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:26px}
+    .stamp{aspect-ratio:1;border:1.5px dashed #8d9c8b;border-radius:50%;display:grid;place-items:center;text-align:center;color:#647b69;font-family:var(--serif);font-size:14px;padding:8px;transition:transform .4s var(--ease),color .3s,border-color .3s}
+    .stamp small{display:block;font:9px var(--sans);letter-spacing:.08em;text-transform:uppercase}
+    .passport:hover .stamp{color:var(--terra);border-color:var(--terra)}
+    .passport:hover .stamp:nth-child(1){transform:rotate(-8deg)}.passport:hover .stamp:nth-child(2){transform:rotate(6deg) scale(1.05)}.passport:hover .stamp:nth-child(3){transform:rotate(-4deg)}
+
+    /* Waitlist */
+    .waitlist{background:var(--sand);padding:100px 0;position:relative;overflow:hidden}
+    .waitlist-inner{display:grid;grid-template-columns:1fr .9fr;gap:60px;align-items:center}
+    .form-card{background:var(--white);border-radius:22px;padding:28px;box-shadow:0 20px 50px rgba(28,42,45,.08);position:relative}
+    .form-card label,.form-card .label{display:block;font-size:12px;font-weight:700;margin-bottom:8px}
+    .form-card .opt{font-weight:400;color:var(--muted)}
+    .form-card input[type=email],.form-card input[type=text]{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:16px;outline:none;transition:border-color .2s,box-shadow .2s}
+    .form-card input:focus{border-color:var(--sage);box-shadow:0 0 0 4px rgba(125,148,132,.16)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 13px;font-size:12.5px;cursor:pointer;transition:background .2s,color .2s,border-color .2s,transform .15s}
+    .chip:hover{transform:translateY(-1px);border-color:var(--sage)}
+    .chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+    .form-card .button{width:100%;padding:15px;font-size:14px;background:var(--ink)}
+    .form-card .button:hover{background:#344b49;box-shadow:0 10px 24px rgba(28,42,45,.25)}
+    .form-card .button[disabled]{opacity:.6;cursor:wait;transform:none}
+    .form-note{font-size:11px;color:var(--muted);margin:13px 0 0;line-height:1.5}
+    #form-status{font-size:13px;margin-top:12px;min-height:20px;font-weight:600}
+    #form-status.error{color:#b4502f}
+    .success{display:none;text-align:center;padding:24px 8px}
+    .success.show{display:block;animation:rise .6s var(--ease)}
+    .success .stamp-big{width:120px;height:120px;margin:0 auto 18px;border:2px dashed var(--terra);border-radius:50%;display:grid;place-items:center;color:var(--terra);font-family:var(--serif);font-size:18px;line-height:1.1;animation:stampIn .7s var(--ease) both}
+    .success h3{font-family:var(--serif);font-weight:400;font-size:28px;margin:0 0 8px}
+    .success p{color:var(--muted);font-size:14px;margin:0}
+
+    footer{background:var(--ink);color:var(--paper);padding:36px 0}
+    .footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px}
+    footer .brand{font-size:17px}
+    footer p{font-size:12px;color:#aab8ae;margin:0}
+    .footer-tag{font-family:var(--serif);font-style:italic;color:var(--terra-light);font-size:18px}
+
+    /* Reveal on scroll: content is visible by default; motion is added only when JS and motion are allowed. */
+    .js .reveal{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+    .js .reveal.in{opacity:1;transform:none}
+    .js .reveal.d1{transition-delay:.1s}.js .reveal.d2{transition-delay:.2s}.js .reveal.d3{transition-delay:.3s}
+
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(194,119,91,.7)}70%{box-shadow:0 0 0 12px rgba(194,119,91,0)}100%{box-shadow:0 0 0 0 rgba(194,119,91,0)}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    @keyframes scroll{to{transform:translateX(-50%)}}
+    @keyframes dash{to{stroke-dashoffset:-320}}
+    @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+    @keyframes stampIn{0%{transform:scale(2.2) rotate(-25deg);opacity:0}70%{transform:scale(.92) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg)}}
+
+    @media(max-width:880px){
+      .hero-inner,.split-grid,.community-grid,.waitlist-inner{grid-template-columns:1fr}
+      .hero-inner{min-height:auto;padding:30px 0 50px;gap:0}
+      .globe-wrap{width:min(440px,100%);margin-top:10px}
+      .split-grid,.community-grid,.waitlist-inner{gap:44px}
+      .pillars{grid-template-columns:1fr 1fr}
+      .pulse-grid{grid-template-columns:1fr 1fr}
+      .map-card{min-height:340px}
+    }
+    @media(max-width:560px){
+      .wrap{width:calc(100% - 34px)}
+      .nav-inner{height:68px}.nav-links{gap:14px}.nav-links a:not(.nav-cta){display:none}
+      .nav-cta{padding:10px 15px;font-size:12px}
+      h1{font-size:54px}
+      .hero-copy{font-size:15.5px}
+      .float-card{font-size:11px;padding:9px 11px;max-width:150px}
+      .fc-one{display:none}
+      .fc-two{top:2%;right:0}
+      .section,.community{padding:76px 0}
+      .pillars{grid-template-columns:1fr;gap:12px;margin-top:36px}
+      .pillar{min-height:0}
+      .split,.pulse,.waitlist{padding:76px 0}
+      .pulse-card{min-height:140px;padding:17px}
+      .row{grid-template-columns:1fr}
+      .passport{padding:24px}
+      .footer-inner{align-items:flex-start;flex-direction:column}
+    }
+    @media (prefers-reduced-motion: reduce){
+      *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+      .js .reveal{opacity:1;transform:none}
+    }
+  </style>
+</head>
+<body>
+  <header class="nav" id="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#" aria-label="Orbis home">ORBIS<span>.</span></a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#discover">Discover</a>
+        <a href="#community">Community</a>
+        <a href="#about">Our approach</a>
+        <a class="nav-cta" href="#waitlist">Get early access</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-inner">
+        <div>
+          <div class="eyebrow"><i aria-hidden="true"></i>Your social travel discovery companion</div>
+          <h1>Find your people.<br>
+            <em class="rotator" aria-live="off"><span id="rotator-word">Go further.</span></em>
+          </h1>
+          <p class="hero-copy">Discover places worth going to, see what other travelers are finding, and connect with people who want to experience the world like you do.</p>
+          <div class="hero-actions">
+            <a class="button" href="#waitlist">Join the waitlist <span aria-hidden="true">↗</span></a>
+            <a class="text-link" href="#discover">Explore the idea</a>
+          </div>
+          <p class="hero-note">For the curious, the adventurous, and everyone in between.</p>
+        </div>
+        <div class="globe-wrap" aria-label="A rotating globe connecting destinations travelers love">
+          <canvas id="globe" role="img" aria-label="Rotating globe with routes between Kyoto, Lisbon, Oaxaca, Svaneti and more"></canvas>
+          <div class="float-card fc-one"><span class="fc-chip">Hidden gem</span><strong>Otagi Nenbutsu-ji, Kyoto</strong><small>1,200 moss-covered stone statues</small></div>
+          <div class="float-card fc-two"><span class="fc-chip">Global Pulse</span><strong>Find your travel people</strong><small>Shared interests. Shared adventures.</small></div>
+        </div>
+      </div>
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker-track" id="ticker"></div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="about">
+      <div class="section-kicker reveal">A different kind of travel companion</div>
+      <h2 class="section-title reveal d1">Travel is more than getting from one place to another.</h2>
+      <p class="section-intro reveal d2">The best parts often happen between the plans: a tucked-away café, a festival you didn't know existed, a new friend who shares your curiosity. Orbis brings discovery, planning, and connection into one experience.</p>
+      <div class="pillars">
+        <article class="pillar reveal"><div class="pillar-num">01</div><h3>Discover</h3><p>Explore destinations, hidden gems, local experiences, and happenings from around the world.</p></article>
+        <article class="pillar reveal d1"><div class="pillar-num">02</div><h3>Connect</h3><p>Find travelers with shared interests and overlapping travel plans, and grow a community of explorers.</p></article>
+        <article class="pillar reveal d2"><div class="pillar-num">03</div><h3>Experience</h3><p>Turn the things that inspire you into personal travel plans, itineraries, and memories.</p></article>
+      </div>
+    </section>
+
+    <section class="split" id="discover">
+      <div class="wrap split-grid">
+        <div class="map-card reveal" aria-label="Illustrative map with discovery points">
+          <svg viewBox="0 0 400 440" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs><pattern id="contours" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="26" fill="none" stroke="rgba(90,119,102,.18)"/><circle cx="30" cy="30" r="14" fill="none" stroke="rgba(90,119,102,.14)"/></pattern></defs>
+            <rect width="400" height="440" fill="url(#contours)"/>
+            <path class="route-path" d="M70 300 C 140 230, 180 260, 220 200 S 320 120, 330 120"/>
+            <circle cx="70" cy="300" r="7" fill="#c2775b" stroke="#fff" stroke-width="2"/>
+            <circle cx="220" cy="200" r="7" fill="#c2775b" stroke="#fff" stroke-width="2"/>
+            <circle cx="330" cy="120" r="7" fill="#c2775b" stroke="#fff" stroke-width="2"/>
+          </svg>
+          <div class="map-label label-a"><b>Hidden corners</b>Places worth finding</div>
+          <div class="map-label label-b"><b>Global Pulse</b>Reasons to go</div>
+          <div class="map-label label-c"><b>Your next stop</b>Saved for later</div>
+        </div>
+        <div>
+          <div class="section-kicker reveal">Explore your way</div>
+          <h2 class="section-title reveal d1">Follow the map. Or follow your curiosity.</h2>
+          <p class="section-intro reveal d2">The Orbis map and discovery feed work side by side. Browse by place when you know where you want to look, or follow the feed when you want to be surprised.</p>
+          <div class="feature-list">
+            <div class="feature reveal"><div class="feature-icon">⌖</div><div><h3>A world of discovery</h3><p>Explore destinations and open a richer view of what makes each place worth experiencing.</p></div></div>
+            <div class="feature reveal d1"><div class="feature-icon">✳</div><div><h3>Hidden Gems</h3><p>Find community-shared places beyond the usual recommendations, with contributors credited.</p></div></div>
+            <div class="feature reveal d2"><div class="feature-icon">◷</div><div><h3>Global Pulse</h3><p>Discover events and cultural happenings that give you a reason to put a destination on your map.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pulse">
+      <div class="pulse-glow" aria-hidden="true"></div>
+      <div class="wrap">
+        <div class="section-kicker reveal">The world is happening</div>
+        <h2 class="section-title reveal d1">Sometimes the best destination is an experience waiting to happen.</h2>
+        <p class="section-intro reveal d2">From sport and music to art, design, food, and culture, Global Pulse brings interesting happenings into view, so inspiration can find you.</p>
+        <div class="pulse-grid">
+          <article class="pulse-card reveal"><span>01 / Culture</span><h3>Festivals &amp; traditions</h3><p>Lantern nights, harvest fairs, street parades.</p></article>
+          <article class="pulse-card reveal d1"><span>02 / Sport</span><h3>Games &amp; competitions</h3><p>Marathons, derbies and the stadiums worth the trip.</p></article>
+          <article class="pulse-card reveal d2"><span>03 / Art &amp; design</span><h3>Exhibitions &amp; openings</h3><p>Design weeks, open studios, new galleries.</p></article>
+          <article class="pulse-card reveal d3"><span>04 / Ideas</span><h3>Technology &amp; innovation</h3><p>Summits, side-events and founder meetups.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="community wrap" id="community">
+      <div class="community-grid">
+        <div>
+          <div class="section-kicker reveal">Your world, your way</div>
+          <h2 class="section-title reveal d1">A travel story that's yours to keep.</h2>
+          <p class="section-intro reveal d2">Build a traveler profile that reflects what you love. Save the places you dream of visiting, keep track of where you've been, and make your discoveries part of a growing travel identity.</p>
+          <div class="feature-list">
+            <div class="feature reveal"><div class="feature-icon">◎</div><div><h3>Your Passport</h3><p>A personal snapshot of visited places, bucket-list destinations, and travel interests.</p></div></div>
+            <div class="feature reveal d1"><div class="feature-icon">✧</div><div><h3>Plans that fit you</h3><p>Get itinerary suggestions shaped by your interests, then make them your own.</p></div></div>
+            <div class="feature reveal d2"><div class="feature-icon">＋</div><div><h3>Explore together</h3><p>Follow fellow travelers and discover opportunities to connect around shared destinations.</p></div></div>
+          </div>
+        </div>
+        <div class="passport reveal d1">
+          <div class="passport-top"><strong>ORBIS / PASSPORT</strong><span>Explorer edition</span></div>
+          <h3>Your world, unfolding.</h3>
+          <p>A collection of places, plans, and possibilities.</p>
+          <div class="stamps">
+            <div class="stamp">Wander<small>Discover</small></div>
+            <div class="stamp">Wonder<small>Experience</small></div>
+            <div class="stamp">Connect<small>Community</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="waitlist" id="waitlist">
+      <div class="wrap waitlist-inner">
+        <div>
+          <div class="section-kicker reveal">Come explore with us</div>
+          <h2 class="section-title reveal d1">The world is bigger than your bucket list.</h2>
+          <p class="section-intro reveal d2">Orbis is being built for people who want to see a little further, find a little more, and make every journey their own. Be among the first to explore it.</p>
+        </div>
+        <div class="form-card reveal d1">
+          <form id="waitlist-form" novalidate>
+            <div class="row">
+              <div>
+                <label for="email">Your email address</label>
+                <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required maxlength="254">
+              </div>
+              <div>
+                <label for="first-name">First name <span class="opt">(optional)</span></label>
+                <input id="first-name" name="first_name" type="text" placeholder="Sophia" autocomplete="given-name" maxlength="60">
+              </div>
+            </div>
+            <span class="label" id="interests-label">What are you most excited to explore? <span class="opt">(optional)</span></span>
+            <div class="chips" role="group" aria-labelledby="interests-label" id="chips"></div>
+            <label for="note">Anything else? <span class="opt">(optional)</span></label>
+            <input id="note" name="note" type="text" placeholder="A place you're dreaming of, a trip you're planning…" maxlength="280">
+            <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+            <button class="button" type="submit" id="submit">Request early access <span aria-hidden="true">↗</span></button>
+            <p class="form-note">No noise, just thoughtful updates as Orbis takes shape. By joining, you agree to receive product updates. You can ask us to remove you at any time.</p>
+            <div id="form-status" role="status" aria-live="polite"></div>
+          </form>
+          <div class="success" id="success" role="status" aria-live="polite">
+            <div class="stamp-big">On the<br>list ✓</div>
+            <h3 id="success-title">You're on the list.</h3>
+            <p id="success-body">We'll be in touch as Orbis opens up. See you out there.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <a class="brand" href="#">ORBIS<span>.</span></a>
+      <p>Discover more. Experience deeply. Stay curious.</p>
+      <div class="footer-tag">See beyond the destination.</div>
+    </div>
+  </footer>
+
+  <script>
+    // Public Supabase settings. The publishable key is designed to be public: the waitlist can only
+    // be written through join_waitlist(), which validates and rate-limits, and nothing can be read.
+    const SUPABASE_URL = "https://anqlngiqsfhsyxpglfmt.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_A0g8x8BJBDctdWxFgxh_lg_v2A32OMc";
+    const LAND = {"step":2.5,"top":85,"bottom":-60,"cols":144,"data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAMD/wP8AAAAAAAAAAAAAAAAAAPzP//8BAAcAAMAAAAAAAAAAAuDh//8BwAIAAAAEAAAAAAAAOP0B/v8AAACAAfg/ABsAAADAP+cC+P8AAABgcP7/DwcAgH8w/Mwf+H8AAB4A+P////8Ag////994+AcAwP/1////////xf///38+8IAH4Ln+////////wP///48icAAA+P7///////9/gBf//wdcAAAA+PD//////z8GAAr4/wf8AADAcP7//////4ADgADw///+AQDgAP7/////f4ABAADg///+AwCg/f///////4MAAACg//8/AgAA/v///////wMAAAAA//9vBACA/////////wIAAACA////AAAA38/n////fwIAAACA//8PAADgIw/O////HwMAAACA//8HAADgAfvP////DgEAAACA//8DAADgQPrP////CAEAAAAA//8DAADAH6T/////6AAAAAAA/P8AAADgP8L/////AQAAAAAA/N8AAADg///v////AQAAAAAA+IMAAAD4/7/P////AQAAAAAA4AEAAAD4/79f+P//AAAAAAAAwAEBAAD8/3//8P8/AAAAAAAAwDMGAAD8/3/+wMcXAAAAAAAAAB8AAAD8//9+wMMHAAAAAAAAAHgAAAD8//8dwAEPAAAAAAAAAEAAAAD8//8DwAEPBAAAAAAAAED8AAD4//8fgAAEAAAAAAAAAAD+AQD4//8PAAEBBgAAAAAAAAD8DwCg+P8PAIDCAAAAAAAAAAD+DwAA8P8HAADjAAAAAAAAAAD/DwAA8P8DAABzAQAAAAAAAAD+fwAA8P8BAABmgQEAAAAAAAD//wMA4P8AAAAEgwcAAAAAAAD+/wcAwP8AAAA4AAcAAAAAAAD+/wMAwP8AAAAAARAAAAAAAAD8/wEAwP8BAAAAYAIAAAAAAAD8/wEA4P8ZAAAAfAYAAAAAAADw/wEA4P8MAAAA/gYAAAAAAADw/wAAwD8MAAAA/w8AAAAAAADw/wAAwH8MAADA/x8AAAAAAADwHwAAwD8EAADA/z8AAAAAAADwHwAAgD8AAADA/z8AAAAAAADwDwAAgB8AAACA/z8AAAAAAADwDwAAAA8AAACAxx8AAAAAAADwAQAAAAAAAACAgB8AAAAAAAD4AwAAAAAAAAAAAA5AAAAAAAD4AAAAAAAAAAAAAABAAAAAAAB4AAAAAAAAAAAAAAggAAAAAAA4AAAAAAAAAAAAAAAYAAAAAAA4AAAAAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","land":2495};
+
+    document.documentElement.classList.add("js");
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Sticky nav background
+    const nav = document.getElementById("nav");
+    const onScroll = () => nav.classList.toggle("scrolled", scrollY > 30);
+    addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+    // Reveal on scroll
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.15 });
+    document.querySelectorAll(".reveal").forEach((el) => (reduceMotion ? el.classList.add("in") : io.observe(el)));
+
+    // Rotating headline
+    const words = ["Go further.", "Find hidden gems.", "Catch the festival.", "Plan it together."];
+    const word = document.getElementById("rotator-word");
+    if (!reduceMotion) {
+      let i = 0;
+      setInterval(() => {
+        word.style.transform = "translateY(-110%)"; word.style.opacity = "0";
+        setTimeout(() => {
+          i = (i + 1) % words.length; word.textContent = words[i];
+          word.style.transition = "none"; word.style.transform = "translateY(110%)";
+          requestAnimationFrame(() => requestAnimationFrame(() => { word.style.transition = ""; word.style.transform = ""; word.style.opacity = "1"; }));
+        }, 700);
+      }, 3200);
+    }
+
+    // Destination ticker (real Orbis destinations)
+    const places = ["Kyoto", "Svaneti Valley", "Lisbon", "Oaxaca", "Lofoten", "Kravice Waterfalls", "Matera", "Hội An", "Gjirokastër", "Faroe Islands", "Luang Prabang", "Albarracín", "Marrakech", "Lake Ohrid"];
+    document.getElementById("ticker").innerHTML = [...places, ...places].map((p) => `<span>${p}</span>`).join("");
+
+    // Globe: dotted continents from a land mask, with arcs between destinations.
+    (function globe() {
+      const canvas = document.getElementById("globe"); const ctx = canvas.getContext("2d");
+      const bytes = Uint8Array.from(atob(LAND.data), (c) => c.charCodeAt(0));
+      const pts = []; let n = 0;
+      for (let lat = LAND.top; lat >= LAND.bottom - 1e-9; lat -= LAND.step) for (let k = 0; k < LAND.cols; k++, n++) if (bytes[n >> 3] & (1 << (n & 7))) pts.push([lat, -180 + k * LAND.step]);
+      const pins = [[35.01, 135.77], [38.72, -9.14], [17.07, -96.73], [43.0, 42.73], [68.2, 13.6], [40.67, 16.6], [15.88, 108.33], [64.15, -21.94], [-33.92, 18.42]];
+      const arcs = [[0, 6], [1, 2], [1, 3], [5, 4], [3, 0], [8, 1], [7, 4]];
+      const rad = Math.PI / 180; let rot = -20, tilt = 18, dpr = 1, size = 0, dragging = null;
+      const resize = () => { dpr = Math.min(devicePixelRatio || 1, 2); const r = canvas.getBoundingClientRect(); size = r.width; canvas.width = r.width * dpr; canvas.height = r.height * dpr; };
+      addEventListener("resize", resize); resize();
+      const project = (lat, lng) => {
+        const l = (lng + rot) * rad, p = lat * rad, t = tilt * rad;
+        let x = Math.cos(p) * Math.sin(l), y = Math.sin(p), z = Math.cos(p) * Math.cos(l);
+        const y2 = y * Math.cos(t) - z * Math.sin(t), z2 = y * Math.sin(t) + z * Math.cos(t);
+        return [x, -y2, z2];
+      };
+      const slerp = (a, b, f) => { // great-circle point between two [lat,lng]
+        const toV = ([la, ln]) => [Math.cos(la * rad) * Math.cos(ln * rad), Math.cos(la * rad) * Math.sin(ln * rad), Math.sin(la * rad)];
+        const A = toV(a), B = toV(b); const d = Math.acos(Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2])) || 1e-6;
+        const s1 = Math.sin((1 - f) * d) / Math.sin(d), s2 = Math.sin(f * d) / Math.sin(d);
+        const v = [A[0] * s1 + B[0] * s2, A[1] * s1 + B[1] * s2, A[2] * s1 + B[2] * s2];
+        return [Math.asin(v[2]) / rad, Math.atan2(v[1], v[0]) / rad, Math.sin(f * Math.PI)];
+      };
+      let t0 = performance.now();
+      function draw(now) {
+        const dt = now - t0; t0 = now;
+        if (!dragging && !reduceMotion) rot += dt * 0.006;
+        const W = canvas.width, R = W * 0.42, cx = W / 2, cy = W / 2;
+        ctx.clearRect(0, 0, W, W);
+        const g = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R * 1.05);
+        g.addColorStop(0, "rgba(125,148,132,.30)"); g.addColorStop(1, "rgba(28,42,45,.0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "rgba(224,232,222,.18)"; ctx.lineWidth = dpr; ctx.stroke();
+        for (const [la, ln] of pts) {
+          const [x, y, z] = project(la, ln); if (z <= 0) continue;
+          ctx.fillStyle = `rgba(224,232,222,${0.18 + z * 0.55})`;
+          ctx.beginPath(); ctx.arc(cx + x * R, cy + y * R, (0.7 + z * 1.1) * dpr, 0, Math.PI * 2); ctx.fill();
+        }
+        const phase = (now / 2600) % 1;
+        for (const [ai, bi] of arcs) {
+          ctx.beginPath(); let started = false;
+          for (let f = 0; f <= 1.0001; f += 0.025) {
+            const [la, ln, lift] = slerp(pins[ai], pins[bi], f); const [x, y, z] = project(la, ln); const h = 1 + lift * 0.18;
+            if (z < -0.05) { started = false; continue; }
+            const px = cx + x * R * h, py = cy + y * R * h; started ? ctx.lineTo(px, py) : ctx.moveTo(px, py); started = true;
+          }
+          ctx.strokeStyle = "rgba(213,161,139,.55)"; ctx.lineWidth = 1.4 * dpr; ctx.stroke();
+          const [la, ln, lift] = slerp(pins[ai], pins[bi], phase); const [x, y, z] = project(la, ln);
+          if (z > 0) { const h = 1 + lift * 0.18; ctx.fillStyle = "#f3c2ab"; ctx.beginPath(); ctx.arc(cx + x * R * h, cy + y * R * h, 2.6 * dpr, 0, Math.PI * 2); ctx.fill(); }
+        }
+        for (const [la, ln] of pins) {
+          const [x, y, z] = project(la, ln); if (z <= 0) continue;
+          const px = cx + x * R, py = cy + y * R, pulse = (((now / 1400 + la / 90) % 1) + 1) % 1;
+          ctx.fillStyle = `rgba(194,119,91,${0.35 * (1 - pulse)})`; ctx.beginPath(); ctx.arc(px, py, (4 + pulse * 12) * dpr, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#c2775b"; ctx.strokeStyle = "#fffefa"; ctx.lineWidth = 1.5 * dpr; ctx.beginPath(); ctx.arc(px, py, 4 * dpr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        }
+        requestAnimationFrame(draw);
+      }
+      canvas.addEventListener("pointerdown", (e) => { dragging = { x: e.clientX, y: e.clientY, rot, tilt }; canvas.setPointerCapture(e.pointerId); });
+      canvas.addEventListener("pointermove", (e) => { if (!dragging) return; rot = dragging.rot + (e.clientX - dragging.x) * 0.4; tilt = Math.max(-40, Math.min(40, dragging.tilt + (e.clientY - dragging.y) * 0.25)); });
+      const end = () => (dragging = null); canvas.addEventListener("pointerup", end); canvas.addEventListener("pointercancel", end);
+      requestAnimationFrame(draw);
+    })();
+
+    // Interest chips (keys match the database's allowed list)
+    const interests = { hidden_gems: "Hidden gems", events: "Events & festivals", travel_buddies: "Travel buddies", itineraries: "Trip planning", food: "Food", culture: "Culture", adventure: "Adventure", photography: "Photography", wellness: "Wellness" };
+    const chips = document.getElementById("chips");
+    chips.innerHTML = Object.entries(interests).map(([k, v]) => `<button type="button" class="chip" aria-pressed="false" data-key="${k}">${v}</button>`).join("");
+    chips.addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (b) b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true"); });
+
+    // Waitlist submission → Supabase join_waitlist()
+    const form = document.getElementById("waitlist-form"), statusEl = document.getElementById("form-status"), submit = document.getElementById("submit");
+    const MESSAGES = {
+      invalid_email: "Please enter a valid email address.",
+      invalid: "Please check your name and note. Links aren't allowed.",
+      rate_limited: "Too many attempts from your connection. Please try again in a little while.",
+      network: "We couldn't reach Orbis just now. Please check your connection and try again.",
+    };
+    const showError = (msg) => { statusEl.className = "error"; statusEl.textContent = msg; };
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = ""; statusEl.className = "";
+      const email = form.email.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { showError(MESSAGES.invalid_email); form.email.focus(); return; }
+      const params = new URLSearchParams(location.search);
+      const utm = {}; ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"].forEach((k) => params.get(k) && (utm[k] = params.get(k).slice(0, 100)));
+      let referrer = null; try { referrer = document.referrer ? new URL(document.referrer).hostname : null; } catch {}
+      const body = {
+        p_email: email,
+        p_first_name: form.first_name.value.trim() || null,
+        p_interests: [...chips.querySelectorAll('[aria-pressed="true"]')].map((b) => b.dataset.key),
+        p_note: form.note.value.trim() || null,
+        p_source: "website",
+        p_utm: utm,
+        p_referrer: referrer,
+        p_locale: (navigator.language || "en").slice(0, 10),
+        p_website: form.website.value,
+      };
+      submit.disabled = true; submit.firstChild.textContent = "Joining… ";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/join_waitlist`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const { status } = await res.json();
+        if (status === "joined" || status === "already_joined") {
+          const name = body.p_first_name ? `, ${body.p_first_name}` : "";
+          document.getElementById("success-title").textContent = status === "joined" ? `You're on the list${name}.` : "You're already on the list.";
+          document.getElementById("success-body").textContent = status === "joined"
+            ? "We'll be in touch as Orbis opens up. See you out there."
+            : "Good news: this email is already signed up. We'll be in touch soon.";
+          form.style.display = "none"; document.getElementById("success").classList.add("show");
+        } else {
+          showError(MESSAGES[status] || MESSAGES.network);
+        }
+      } catch {
+        showError(MESSAGES.network);
+      } finally {
+        submit.disabled = false; submit.firstChild.textContent = "Request early access ";
+      }
+    });
+  </script>
+</body>
+</html>
