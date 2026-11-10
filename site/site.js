@@ -3,10 +3,10 @@
 (function () {
   "use strict";
   var CONFIG = window.ORBIS_CONFIG || {};
-  var APP_URL = CONFIG.appUrl || "/app/";
+  var APP_URL = CONFIG.appUrl || "https://app.discoverorbis.com/";
 
-  // Sign-in, confirmation and password-reset links sent before the app moved to /app/ land here.
-  // Forward them to the app with their tokens intact.
+  // If a sign-in, confirmation or password-reset link ever lands on the website, forward it to the
+  // app with its tokens intact.
   var authParams = /(^|[?#&])(access_token|refresh_token|code|token_hash|error_description)=|type=(recovery|signup|magiclink|invite|email_change)/;
   if (authParams.test(location.search + location.hash)) {
     location.replace(APP_URL + location.search + location.hash);

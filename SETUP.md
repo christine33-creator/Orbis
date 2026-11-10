@@ -43,7 +43,7 @@ supabase db push
 delete from public.events where source = 'sample';
 ```
 
-> **Status for the Orbis project (Nov 2026):** migrations 1–5 and the seed are applied to the live project `anqlngiqsfhsyxpglfmt`, the site URL and redirect URLs are set to `https://orbis-alpha-green.vercel.app`, and the minimum password length is 8. The remaining steps below are the ones still to do in the dashboard.
+> **Status for the Orbis project (Nov 2026):** migrations 1–6 and the seed are applied to the live project `anqlngiqsfhsyxpglfmt`, the site URL is `https://app.discoverorbis.com` (redirect URLs also allow `orbis-alpha-green.vercel.app` and preview deployments), and the minimum password length is 8. The remaining steps below are the ones still to do in the dashboard.
 
 ## 2. Connect the app (Required)
 
@@ -91,7 +91,7 @@ How moderation works:
 
 On Vercel or Netlify: import the GitHub repo, set build command `npm run build`, output directory `dist`, and add the two `VITE_SUPABASE_*` environment variables. Then point your domain at it and update the Site URL from step 3.
 
-The deployment root serves the marketing page with the waitlist (`site/`), and the app is served at `/app/`. Locally, `npm run dev` serves the app at `http://localhost:5173/app/`.
+The app lives at **app.discoverorbis.com** (Vercel). The marketing site, discoverorbis.com, is hosted separately on Netlify from the `site/` folder.
 
 ## Waitlist (discoverorbis.com)
 
@@ -100,7 +100,7 @@ The deployment root serves the marketing page with the waitlist (`site/`), and t
 - **Writes:** only through `join_waitlist()`, which checks the email format, drops bot submissions (a hidden honeypot field) and allows 8 attempts per visitor per hour and 500 per hour overall. Visitor IPs are stored only as daily salted hashes.
 - **Reads:** the public API can't read the table, whether signed in or not.
 - **Removing someone:** delete their row in Table Editor.
-- The page is served at the root of the Vercel deployment, with the app at `/app/`. To host it elsewhere, `npm run site:zip`. See `site/README.md`.
+- The page is hosted on Netlify, separately from the app. See `site/README.md`.
 
 ## 6. Automatic events (Optional)
 

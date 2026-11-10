@@ -1,13 +1,13 @@
 // Writes site/config.js for the discoverorbis.com page: the public Supabase settings, where the app
 // lives, and the land mask for the globe.
-// Usage: SUPABASE_URL=… SUPABASE_PUBLISHABLE_KEY=… [APP_URL=/app/] node scripts/build-site.mjs
+// Usage: SUPABASE_URL=… SUPABASE_PUBLISHABLE_KEY=… [APP_URL=https://app.discoverorbis.com/] node scripts/build-site.mjs
 // Only the public (anon/publishable) key belongs here — never the service_role key.
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-const appUrl = process.env.APP_URL || "/app/";
+const appUrl = process.env.APP_URL || "https://app.discoverorbis.com/";
 if (!url || !key) throw new Error("Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY");
 if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)) throw new Error("SUPABASE_URL should look like https://<ref>.supabase.co");
 if (/service_role|^sb_secret_/.test(key) || /"role"\s*:\s*"service_role"/.test(decodeJwt(key))) throw new Error("Refusing to embed a secret key in a public page");
