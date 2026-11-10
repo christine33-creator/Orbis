@@ -91,6 +91,8 @@ How moderation works:
 
 On Vercel or Netlify: import the GitHub repo, set build command `npm run build`, output directory `dist`, and add the two `VITE_SUPABASE_*` environment variables. Then point your domain at it and update the Site URL from step 3.
 
+The deployment root serves the marketing page with the waitlist (`site/`), and the app is served at `/app/`. Locally, `npm run dev` serves the app at `http://localhost:5173/app/`.
+
 ## Waitlist (discoverorbis.com)
 
 - Signups from the marketing site are stored in `public.waitlist_signups`. Open **Table Editor → waitlist_signups** to see them, or export them as CSV from there.
@@ -98,7 +100,7 @@ On Vercel or Netlify: import the GitHub repo, set build command `npm run build`,
 - **Writes:** only through `join_waitlist()`, which checks the email format, drops bot submissions (a hidden honeypot field) and allows 8 attempts per visitor per hour and 500 per hour overall. Visitor IPs are stored only as daily salted hashes.
 - **Reads:** the public API can't read the table, whether signed in or not.
 - **Removing someone:** delete their row in Table Editor.
-- Deploying the page: see `site/README.md`.
+- The page is served at the root of the Vercel deployment, with the app at `/app/`. To host it elsewhere, `npm run site:zip`. See `site/README.md`.
 
 ## 6. Automatic events (Optional)
 
