@@ -30,6 +30,16 @@ export interface Api {
   signUpWithPassword(email: string, password: string): Promise<{ needsConfirmation: boolean }>;
   signInWithGoogle(): Promise<void>;
   signOut(): Promise<void>;
+  /** Fires when someone arrives from a password-reset email (they are signed in and must choose a new password). */
+  onPasswordRecovery(cb: () => void): () => void;
+  /** Which third-party sign-in providers are enabled on the backend. */
+  authProviders(): Promise<{ google: boolean }>;
+  requestPasswordReset(email: string): Promise<void>;
+  /** Sets a new password. Pass the current password to re-verify it first (Settings); omit it after a reset link. */
+  updatePassword(newPassword: string, currentPassword?: string): Promise<void>;
+  resendVerification(email: string): Promise<void>;
+  /** Starts an email change; Supabase sends confirmation links before it takes effect. */
+  changeEmail(newEmail: string): Promise<void>;
   deleteAccount(): Promise<void>;
 
   // Profiles

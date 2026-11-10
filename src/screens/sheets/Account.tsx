@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Ban, BookOpen, Check, EyeOff, Flag, Languages, LogOut, Mail, ShieldCheck, Trash2, X } from "lucide-react";
-import { api } from "../../api";
+import { AtSign, Ban, BookOpen, Check, Eye, EyeOff, Flag, KeyRound, Languages, LogOut, Mail, ShieldCheck, Trash2, X } from "lucide-react";
+import { api, ApiError } from "../../api";
+import { passwordRules, passwordStrength, passwordValid } from "../../lib/password";
 import { queryClient } from "../../api/hooks";
 import { resetLocalDb } from "../../api/local";
 import {
@@ -21,68 +22,94 @@ import type { Report } from "../../types";
 
 /* ------------------------------------------------------------------ Auth */
 
+type AuthMode = "signIn" | "signUp" | "link" | "forgot";
+
 export function AuthSheet({ reason, onClose }: { reason?: string; onClose: () => void }) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<"link" | "password">("link");
-  const [signUp, setSignUp] = useState(false);
+  const [mode, setMode] = useState<AuthMode>(api.mode === "local" ? "link" : "signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<{ text: string; unverified?: boolean } | null>(null);
+  const [sent, setSent] = useState<null | "verify" | "link" | "reset">(null);
+  const [google, setGoogle] = useState(false);
   const local = api.mode === "local";
 
+  useEffect(() => {
+    let alive = true;
+    api.authProviders().then((p) => alive && setGoogle(p.google));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const run = async (fn: () => Promise<unknown>) => {
-    setError("");
+    setError(null);
     setBusy(true);
     try {
       await fn();
     } catch (e) {
-      setError(errorText(t, e));
+      setError({ text: errorText(t, e), unverified: e instanceof ApiError && e.code === "emailNotConfirmed" });
     } finally {
       setBusy(false);
     }
   };
 
+  const switchMode = (m: AuthMode) => {
+    setMode(m);
+    setError(null);
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "link") {
-      run(async () => {
+    if (mode === "signUp" && !passwordValid(password, email)) {
+      setError({ text: t("errors.weakPassword") });
+      return;
+    }
+    run(async () => {
+      if (mode === "link") {
         await api.sendMagicLink(email);
         if (local) onClose();
-        else setSent(true);
-      });
-    } else {
-      run(async () => {
-        if (signUp) {
-          const { needsConfirmation } = await api.signUpWithPassword(email, password);
-          if (needsConfirmation) setSent(true);
-          else onClose();
-        } else {
-          await api.signInWithPassword(email, password);
-          onClose();
-        }
-      });
-    }
+        else setSent("link");
+      } else if (mode === "forgot") {
+        await api.requestPasswordReset(email);
+        setSent("reset");
+      } else if (mode === "signUp") {
+        const { needsConfirmation } = await api.signUpWithPassword(email, password);
+        if (needsConfirmation) setSent("verify");
+        else onClose();
+      } else {
+        await api.signInWithPassword(email, password);
+        onClose();
+      }
+    });
   };
+
+  const title = mode === "forgot" ? t("auth.forgotTitle") : `${t("brand.slogan")}.`;
 
   return (
     <Sheet onClose={onClose}>
       <div className="pb-2 text-center">
         <div className="mx-auto w-fit"><Logo size={44} /></div>
-        <h1 className="font-display mt-3 text-[28px] leading-tight font-semibold">{t("brand.slogan")}.</h1>
-        <p className="mx-auto mt-2 max-w-[300px] text-[14px] text-muted">{reason ?? t("auth.defaultReason", { app: APP_NAME })}</p>
+        <h1 className="font-display mt-3 text-[28px] leading-tight font-semibold">{title}</h1>
+        <p className="mx-auto mt-2 max-w-[300px] text-[14px] text-muted">
+          {mode === "forgot" ? t("auth.forgotSub") : (reason ?? t("auth.defaultReason", { app: APP_NAME }))}
+        </p>
       </div>
 
       {sent ? (
         <Card className="mt-5 p-5 text-center">
           <Mail className="mx-auto text-accent" size={30} />
           <h2 className="mt-2 text-[17px] font-bold">{t("auth.checkEmail")}</h2>
-          <p className="mt-1 text-[14px] text-muted">{t("auth.sentLink", { email })}</p>
-          <button onClick={() => setSent(false)} className="mt-3 text-[13px] font-bold text-accent">{t("auth.otherEmail")}</button>
+          <p className="mt-1 text-[14px] text-muted">
+            {sent === "verify" ? t("auth.sentVerify", { email }) : sent === "reset" ? t("auth.sentReset", { email }) : t("auth.sentLink", { email })}
+          </p>
+          {sent === "verify" && <ResendVerification email={email} />}
+          <button onClick={() => { setSent(null); switchMode("signIn"); }} className="mt-3 text-[13px] font-bold text-accent">{t("auth.backToSignIn")}</button>
         </Card>
       ) : (
-        <form onSubmit={submit} className="mt-5 space-y-3">
+        <form onSubmit={submit} className="mt-5 space-y-3" noValidate>
           {local && (
             <>
               <Button type="button" variant="dark" className="w-full py-3.5" disabled={busy} onClick={() => run(async () => { await startDemoProfile(); onClose(); })}>
@@ -91,23 +118,57 @@ export function AuthSheet({ reason, onClose }: { reason?: string; onClose: () =>
               <p className="rounded-2xl bg-chip p-3 text-[12.5px] text-muted">{t("auth.demoNote")}</p>
             </>
           )}
+          {(mode === "signIn" || mode === "signUp") && (
+            <div className="flex rounded-2xl bg-chip p-1" role="tablist">
+              {(["signIn", "signUp"] as const).map((m) => (
+                <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => switchMode(m)}
+                  className={cx("flex-1 rounded-xl py-2 text-[13px] font-bold transition", mode === m ? "bg-card shadow-sm" : "text-muted")}>
+                  {m === "signIn" ? t("auth.signIn") : t("auth.createAccount")}
+                </button>
+              ))}
+            </div>
+          )}
           <Field label={t("auth.email")}>
             <input id="auth-email" type="email" autoComplete="email" required className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           </Field>
-          {mode === "password" && (
-            <Field label={t("auth.password")} hint={signUp ? t("auth.passwordHint") : undefined}>
-              <input id="auth-password" type="password" autoComplete={signUp ? "new-password" : "current-password"} required minLength={signUp ? 8 : 1} className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} />
-            </Field>
+          {(mode === "signIn" || mode === "signUp") && (
+            <div>
+              <Field label={t("auth.password")}>
+                <div className="relative">
+                  <input id="auth-password" type={showPw ? "text" : "password"} autoComplete={mode === "signUp" ? "new-password" : "current-password"} required
+                    className={cx(inputCls, "pr-12")} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? t("auth.hidePassword") : t("auth.showPassword")}
+                    className="absolute top-1/2 right-3 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-muted hover:bg-chip">
+                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </Field>
+              {mode === "signUp" && <PasswordChecklist password={password} email={email} />}
+              {mode === "signIn" && (
+                <button type="button" onClick={() => switchMode("forgot")} className="mt-2 text-[12.5px] font-bold text-accent">{t("auth.forgot")}</button>
+              )}
+            </div>
           )}
-          {error && <p className="rounded-2xl bg-accent-soft p-3 text-[13px] font-semibold text-accent" role="alert">{error}</p>}
-          <Button type="submit" className="w-full py-3.5" disabled={busy}>
-            {busy ? t("common.pleaseWait") : mode === "link" ? (local ? t("auth.continue") : t("auth.emailLink")) : signUp ? t("auth.createAccount") : t("auth.signIn")}
+          {error && (
+            <div className="rounded-2xl bg-accent-soft p-3 text-[13px] font-semibold text-accent" role="alert">
+              {error.text}
+              {error.unverified && <ResendVerification email={email} />}
+            </div>
+          )}
+          <Button type="submit" className="w-full py-3.5" disabled={busy || !email.trim()}>
+            {busy ? t("common.pleaseWait")
+              : mode === "link" ? (local ? t("auth.continue") : t("auth.emailLink"))
+              : mode === "forgot" ? t("auth.sendReset")
+              : mode === "signUp" ? t("auth.createAccount") : t("auth.signIn")}
           </Button>
-          <div className="flex justify-between gap-3 text-[13px] font-bold text-accent">
-            <button type="button" onClick={() => setMode(mode === "link" ? "password" : "link")}>{mode === "link" ? t("auth.usePassword") : t("auth.useLink")}</button>
-            {mode === "password" && <button type="button" onClick={() => setSignUp(!signUp)}>{signUp ? t("auth.haveAccount") : t("auth.newAccount")}</button>}
+          <div className="flex justify-center text-[13px] font-bold text-accent">
+            {mode === "link" || mode === "forgot" ? (
+              <button type="button" onClick={() => switchMode("signIn")}>{t("auth.backToSignIn")}</button>
+            ) : (
+              <button type="button" onClick={() => switchMode("link")}>{t("auth.useLink")}</button>
+            )}
           </div>
-          {!local && (
+          {google && !local && mode !== "forgot" && (
             <>
               <div className="flex items-center gap-3 py-1 text-[12px] text-faint"><span className="h-px flex-1 bg-line" /> {t("auth.or")} <span className="h-px flex-1 bg-line" /></div>
               <Button type="button" variant="ghost" className="w-full" onClick={() => run(api.signInWithGoogle)}>{t("auth.google")}</Button>
@@ -115,6 +176,152 @@ export function AuthSheet({ reason, onClose }: { reason?: string; onClose: () =>
           )}
           <p className="pt-1 text-center text-[11.5px] text-faint">{t("auth.agree")}</p>
         </form>
+      )}
+    </Sheet>
+  );
+}
+
+/** "Resend email" with a cooldown, for sign-up confirmations. */
+function ResendVerification({ email }: { email: string }) {
+  const { t } = useTranslation();
+  const [wait, setWait] = useState(0);
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    if (!wait) return;
+    const id = setTimeout(() => setWait(wait - 1), 1000);
+    return () => clearTimeout(id);
+  }, [wait]);
+  return (
+    <div className="mt-2">
+      <button type="button" disabled={wait > 0 || !email} className="text-[13px] font-bold text-accent underline disabled:no-underline disabled:opacity-50"
+        onClick={async () => {
+          setMsg("");
+          try {
+            await api.resendVerification(email);
+            setMsg(t("auth.resent"));
+            setWait(60);
+          } catch (e) {
+            setMsg(errorText(t, e));
+          }
+        }}>
+        {wait ? t("auth.resendIn", { s: wait }) : t("auth.resend")}
+      </button>
+      {msg && <p className="mt-1 text-[12px] text-muted" role="status">{msg}</p>}
+    </div>
+  );
+}
+
+/** Live checklist + strength meter for new passwords. */
+export function PasswordChecklist({ password, email = "" }: { password: string; email?: string }) {
+  const { t } = useTranslation();
+  const rules = passwordRules(password, email);
+  const strength = passwordStrength(password);
+  const colors = ["bg-line", "bg-accent", "bg-coral", "bg-[#D9A23B]", "bg-green"];
+  return (
+    <div className="mt-2 space-y-2" aria-live="polite">
+      <div className="flex gap-1" aria-hidden>
+        {[1, 2, 3, 4].map((i) => <span key={i} className={cx("h-1.5 flex-1 rounded-full", strength >= i ? colors[strength] : "bg-line")} />)}
+      </div>
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
+        {(Object.keys(rules) as (keyof typeof rules)[]).map((k) => (
+          <li key={k} className={cx("flex items-center gap-1.5", rules[k] ? "text-green" : "text-muted")}>
+            {rules[k] ? <Check size={13} /> : <span className="h-1.5 w-1.5 rounded-full bg-faint" />} {t(`auth.rules.${k}`)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Opened after a password-reset link, and from Settings. */
+export function PasswordSheet({ mode, onClose }: { mode: "reset" | "change"; onClose: () => void }) {
+  const { t } = useTranslation();
+  const user = useUi((s) => s.user);
+  const toast = useUi((s) => s.toast);
+  const [current, setCurrent] = useState("");
+  const [pw, setPw] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const email = user?.email ?? "";
+  const mismatch = confirm.length > 0 && pw !== confirm;
+  const ok = passwordValid(pw, email) && pw === confirm && (mode === "reset" || current.length > 0);
+
+  const save = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await api.updatePassword(pw, mode === "change" ? current : undefined);
+      toast({ text: t("auth.passwordUpdated"), tone: "info" });
+      onClose();
+    } catch (e) {
+      setError(errorText(t, e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Sheet title={mode === "reset" ? t("auth.setNewPassword") : t("settings.changePassword")} onClose={onClose}
+      footer={<Button className="w-full" disabled={!ok || busy} onClick={save}>{busy ? t("common.pleaseWait") : t("auth.savePassword")}</Button>}>
+      <div className="space-y-4">
+        {mode === "change" && (
+          <Field label={t("auth.currentPassword")}>
+            <input id="pw-current" type="password" autoComplete="current-password" className={inputCls} value={current} onChange={(e) => setCurrent(e.target.value)} />
+          </Field>
+        )}
+        <Field label={t("auth.newPassword")}>
+          <input id="pw-new" type="password" autoComplete="new-password" className={inputCls} value={pw} onChange={(e) => setPw(e.target.value)} />
+        </Field>
+        <PasswordChecklist password={pw} email={email} />
+        <Field label={t("auth.confirmPassword")} hint={mismatch ? t("auth.mismatch") : undefined}>
+          <input id="pw-confirm" type="password" autoComplete="new-password" className={inputCls} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        </Field>
+        {error && <p className="rounded-2xl bg-accent-soft p-3 text-[13px] font-semibold text-accent" role="alert">{error}</p>}
+      </div>
+    </Sheet>
+  );
+}
+
+export function ChangeEmailSheet({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
+  const user = useUi((s) => s.user);
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+  return (
+    <Sheet title={t("settings.changeEmail")} onClose={onClose}
+      footer={done ? undefined : (
+        <Button className="w-full" disabled={busy || !email.trim() || email.trim().toLowerCase() === user?.email}
+          onClick={async () => {
+            setBusy(true);
+            setError("");
+            try {
+              await api.changeEmail(email);
+              setDone(true);
+            } catch (e) {
+              setError(errorText(t, e));
+            } finally {
+              setBusy(false);
+            }
+          }}>
+          {busy ? t("common.pleaseWait") : t("settings.sendConfirmation")}
+        </Button>
+      )}>
+      {done ? (
+        <Card className="p-5 text-center">
+          <Mail className="mx-auto text-accent" size={30} />
+          <p className="mt-2 text-[14px]">{t("settings.emailChangeSent", { email })}</p>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-[13.5px] text-muted">{t("settings.currentEmail", { email: user?.email ?? "" })}</p>
+          <Field label={t("settings.newEmail")}>
+            <input id="new-email" type="email" autoComplete="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} />
+          </Field>
+          {error && <p className="rounded-2xl bg-accent-soft p-3 text-[13px] font-semibold text-accent" role="alert">{error}</p>}
+        </div>
       )}
     </Sheet>
   );
@@ -150,6 +357,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const open = useUi((s) => s.open);
   const closeAll = useUi((s) => s.closeAll);
   const setTab = useUi((s) => s.setTab);
+  const user = useUi((s) => s.user);
   const [confirm, setConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
@@ -203,6 +411,16 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
       <section className="mt-6 space-y-2">
         <h2 className="eyebrow text-muted">{t("settings.account")}</h2>
+        {api.mode === "supabase" && (
+          <>
+            <Card className="flex items-center gap-3 p-4" onClick={() => open({ type: "changeEmail" })}>
+              <AtSign size={18} /> <span className="min-w-0 flex-1"><span className="block text-[14px] font-bold">{t("settings.changeEmail")}</span><span className="block truncate text-[12px] text-muted">{user?.email}</span></span>
+            </Card>
+            <Card className="flex items-center gap-3 p-4" onClick={() => open({ type: "changePassword" })}>
+              <KeyRound size={18} /> <span className="flex-1 text-[14px] font-bold">{t("settings.changePassword")}</span>
+            </Card>
+          </>
+        )}
         <Card className="flex items-center gap-3 p-4" onClick={() => { api.signOut(); closeAll(); setTab("explore"); }}>
           <LogOut size={18} /> <span className="flex-1 text-[14px] font-bold">{t("settings.signOut")}</span>
         </Card>

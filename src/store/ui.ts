@@ -26,7 +26,10 @@ export type Overlay =
   | { type: "xpLog" }
   | { type: "updates" }
   | { type: "guidelines" }
-  | { type: "auth"; reason?: string };
+  | { type: "auth"; reason?: string }
+  | { type: "setPassword" }
+  | { type: "changePassword" }
+  | { type: "changeEmail" };
 
 export interface Toast {
   id: number;

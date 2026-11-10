@@ -1,7 +1,7 @@
 import { useUi, type Overlay } from "../store/ui";
 import { DestinationSheet, EventSheet, GemSheet, ProfileSheet } from "./sheets/Detail";
 import { AddStopSheet, AddTipSheet, AddToTripSheet, EditProfileSheet, NewTripSheet, ReportSheet, ShareGemSheet } from "./sheets/Forms";
-import { AuthSheet, GuidelinesSheet, ModerationSheet, SettingsSheet, UpdatesSheet, XpLogSheet } from "./sheets/Account";
+import { AuthSheet, ChangeEmailSheet, GuidelinesSheet, ModerationSheet, PasswordSheet, SettingsSheet, UpdatesSheet, XpLogSheet } from "./sheets/Account";
 
 export function Overlays() {
   const overlays = useUi((s) => s.overlays);
@@ -32,5 +32,8 @@ function OverlayView({ o, onClose }: { o: Overlay; onClose: () => void }) {
     case "updates": return <UpdatesSheet onClose={onClose} />;
     case "guidelines": return <GuidelinesSheet onClose={onClose} />;
     case "auth": return <AuthSheet reason={o.reason} onClose={onClose} />;
+    case "setPassword": return <PasswordSheet mode="reset" onClose={onClose} />;
+    case "changePassword": return <PasswordSheet mode="change" onClose={onClose} />;
+    case "changeEmail": return <ChangeEmailSheet onClose={onClose} />;
   }
 }
