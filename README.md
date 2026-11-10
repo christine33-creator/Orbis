@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-`npm run dev` (app at http://localhost:5173/app/) without configuration runs in **demo mode**: a full working backend in your browser, with data stored on that device. Production builds never do this: without Supabase settings they show a "not connected" screen. For a shareable demo build, set `VITE_DEMO_MODE=1`. To go live, follow **[SETUP.md](SETUP.md)**.
+`npm run dev` without configuration runs in **demo mode**: a full working backend in your browser, with data stored on that device. Production builds never do this: without Supabase settings they show a "not connected" screen. For a shareable demo build, set `VITE_DEMO_MODE=1`. To go live, follow **[SETUP.md](SETUP.md)**.
 
 ## What's in the MVP
 
@@ -56,8 +56,8 @@ The interface is available in English, Spanish, French, Portuguese, German and J
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Start the app locally (at `/app/`) |
-| `npm run site:zip` | Package the marketing page as `orbis-site.zip` |
+| `npm run dev` | Start the app locally |
+| `npm run site:zip` | Package the marketing page (discoverorbis.com) as `orbis-site.zip` |
 | `npm run build` | Type-check and build for production |
 | `npm test` | Unit tests |
 | `npm run test:db` | Apply migrations and seed to a throwaway Postgres 16 and run the security tests |
