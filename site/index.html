@@ -152,7 +152,7 @@
     .slot{background:#fff;border-radius:12px;padding:9px 11px;margin-bottom:6px;font-size:12px;display:flex;gap:10px;animation:rise .45s var(--ease) both}
     .slot span{flex:none;width:66px;font-size:9.5px;font-weight:650;color:var(--terra);text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
     .slot small{display:block;color:var(--muted);font-size:10.5px}
-    .tabbar{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--white);padding:7px 8px 16px}
+    .tabbar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--white);padding:7px 8px 16px}
     .tab{border:0;background:transparent;border-radius:12px;padding:6px 0 4px;font-size:10.5px;font-weight:600;color:var(--muted);display:grid;justify-items:center;gap:3px;position:relative;transition:color .2s}
     .tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
     .tab[aria-selected=true]{color:var(--terra)}
@@ -225,6 +225,50 @@
     .faces .avatar:first-child{margin-left:0}
     .faces small{margin-left:10px;font-size:12px;color:var(--muted)}
 
+    /* Phone: community view */
+    .group{display:flex;gap:10px;align-items:center;background:#fff;border-radius:16px;padding:8px;margin-bottom:8px;box-shadow:0 4px 14px rgba(28,42,45,.06)}
+    .group .art{width:46px;height:46px;border-radius:12px}
+    .group div{flex:1;min-width:0}
+    .group b{display:block;font-size:12.5px}
+    .group small{display:block;font-size:10.5px;color:var(--muted)}
+    .join{flex:none;border:0;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;background:var(--terra);color:#fff;transition:background .2s,color .2s}
+    .join[aria-pressed=true]{background:var(--sage-light);color:var(--ink)}
+    .mini-post{background:#fff;border-radius:16px;padding:11px 12px;margin-top:12px;box-shadow:0 4px 14px rgba(28,42,45,.06)}
+    .mini-post .who{display:flex;gap:8px;align-items:center;font-size:11.5px}
+    .mini-post .who .avatar{width:24px;height:24px;font-size:10px}
+    .mini-post .who small{color:var(--muted);font-size:10px;display:block}
+    .mini-post h6{font-family:var(--serif);font-weight:500;font-size:15px;margin:8px 0 3px;line-height:1.2}
+    .mini-post p{font-size:11px;color:var(--muted);margin:0;line-height:1.45}
+    .mini-post .acts{display:flex;gap:14px;margin-top:8px;font-size:11px;font-weight:700;color:var(--muted)}
+    .mini-post .acts button{border:0;background:none;padding:0;font-size:11px;font-weight:700;color:var(--muted);display:flex;gap:4px;align-items:center}
+    .mini-post .acts button[aria-pressed=true]{color:var(--terra)}
+
+    /* Community section */
+    .community{padding:110px 0}
+    .community-grid{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+    .kinds{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+    .kind{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--white);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600}
+    .kind i{font-style:normal;color:var(--terra)}
+    .stack{position:relative;min-height:470px}
+    .c-card{position:absolute;background:var(--white);border-radius:24px;box-shadow:0 24px 60px rgba(28,42,45,.12);overflow:hidden;transition:transform .5s var(--ease)}
+    .c-card:hover{transform:translateY(-6px) rotate(0)!important}
+    .c-group{width:300px;left:0;top:0;transform:rotate(-2deg)}
+    .c-group .art{width:100%;height:110px;border-radius:0}
+    .c-group .body{padding:16px 18px 18px}
+    .c-group h3{font-family:var(--serif);font-weight:400;font-size:24px;margin:6px 0 4px}
+    .c-group p{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+    .c-group .row2{display:flex;align-items:center;justify-content:space-between}
+    .c-post{width:330px;right:0;top:150px;padding:18px;transform:rotate(1.5deg)}
+    .c-post .who{display:flex;gap:10px;align-items:center;font-size:13px}
+    .c-post .who small{display:block;color:var(--muted);font-size:11px}
+    .c-post h4{font-family:var(--serif);font-weight:400;font-size:21px;margin:12px 0 6px;line-height:1.2}
+    .c-post p{font-size:13px;color:var(--muted);margin:0}
+    .c-post .place{display:inline-flex;gap:5px;margin-top:10px;font-size:11.5px;font-weight:600;background:var(--sand);border-radius:999px;padding:5px 10px}
+    .c-post .acts{display:flex;gap:16px;margin-top:12px;font-size:12.5px;font-weight:700;color:var(--muted)}
+    .c-gem{position:absolute;left:30px;bottom:0;display:flex;gap:10px;align-items:center;background:var(--ink);color:var(--paper);border-radius:16px;padding:12px 16px;font-size:12.5px;box-shadow:0 18px 40px rgba(28,42,45,.25);animation:float 6s ease-in-out infinite}
+    .c-gem b{color:var(--terra-light)}
+    .buddies-title{font-family:var(--serif);font-weight:400;font-size:26px;margin:80px 0 0}
+
     /* Waitlist */
     .waitlist{background:var(--sand);padding:100px 0;position:relative;overflow:hidden}
     .waitlist-inner{display:grid;grid-template-columns:1fr .95fr;gap:60px;align-items:center}
@@ -289,11 +333,12 @@
       .globe-wrap{width:min(440px,100%);margin-top:20px}
       .passport-grid,.waitlist-inner{gap:44px}
       .buddies{grid-template-columns:1fr}
+      .community-grid{grid-template-columns:1fr;gap:44px}
       .activity{left:0}
     }
     @media(max-width:560px){
       .wrap{width:calc(100% - 32px)}
-      .nav-inner{height:68px}.nav-links{gap:14px}.nav-links a:not(.button):not(.signin){display:none}
+      .nav-inner{height:68px}.nav-links{gap:14px}.nav-links a:not(.button){display:none}
       .nav-links .button{padding:10px 15px;font-size:12px}
       h1{font-size:50px}
       .hero-copy{font-size:15.5px}
@@ -302,7 +347,10 @@
       .float-card{display:none}
       .activity{width:220px;bottom:4%}
       .section{padding:76px 0}
-      .pulse,.together,.waitlist{padding:76px 0}
+      .pulse,.together,.waitlist,.community{padding:76px 0}
+      .stack{min-height:0;display:grid;gap:14px}
+      .c-card,.c-gem{position:static;width:auto!important;transform:none!important}
+      .c-gem{animation:none;font-size:12.5px}
       .events{grid-template-columns:1fr}
       .row{grid-template-columns:1fr}
       .passport{padding:22px;transform:none}
@@ -323,9 +371,9 @@
       <a class="brand" href="#top" aria-label="Orbis home">ORBIS<span>.</span></a>
       <nav class="nav-links" aria-label="Main navigation">
         <a href="#try">Try it</a>
+        <a href="#community">Community</a>
         <a href="#pulse">Global Pulse</a>
         <a href="#passport">Passport</a>
-        <a class="signin" href="https://app.discoverorbis.com/" data-app-link>Sign in</a>
         <a class="button" href="#waitlist">Get early access</a>
       </nav>
     </div>
@@ -360,12 +408,13 @@
       <div class="wrap try-grid">
         <div>
           <div class="kicker reveal">Try Orbis</div>
-          <h2 class="title reveal d1">Discover it. Save it. Make it a trip.</h2>
-          <p class="intro reveal d2">That's the whole loop. Tap the hearts on the phone to save a few places, then turn them into a plan. This is a preview of the real app.</p>
+          <h2 class="title reveal d1">Discover it. Save it. Make it a trip. Share it.</h2>
+          <p class="intro reveal d2">Tap the hearts on the phone to save a few places, turn them into a plan, then join the communities of people who've been there. This is a preview of the real app.</p>
           <div class="steps" role="list">
             <button class="step reveal" role="listitem" data-step="explore" aria-current="true"><span class="step-num">1</span><span><h3>Discover</h3><p>A map and feed of hidden gems shared by travelers and checked by our community.</p></span></button>
             <button class="step reveal d1" role="listitem" data-step="saved" aria-current="false"><span class="step-num">2</span><span><h3>Save</h3><p>Heart anything that sparks curiosity. Every save earns XP toward your Passport.</p></span></button>
             <button class="step reveal d2" role="listitem" data-step="trip" aria-current="false"><span class="step-num">3</span><span><h3>Plan</h3><p>Orbis turns your saves into a day-by-day itinerary you can make your own.</p></span></button>
+            <button class="step reveal d3" role="listitem" data-step="community" aria-current="false"><span class="step-num">4</span><span><h3>Connect</h3><p>Join communities around places and passions. Ask, recommend and swap stories with people who've been there.</p></span></button>
           </div>
           <p class="try-hint"><i aria-hidden="true"></i><span id="try-hint">Tap a heart on the phone to save your first gem.</span></p>
         </div>
@@ -386,6 +435,11 @@
                 <div class="filters" id="filters" role="group" aria-label="Filter gems"></div>
                 <div id="feed"></div>
               </div>
+              <div class="view" id="view-community" role="tabpanel" aria-label="Community" hidden>
+                <h5>Find your people.</h5><p class="sub" id="groups-sub">Communities picked from what you saved.</p>
+                <div id="groups"></div>
+                <div class="mini-post" id="mini-post"></div>
+              </div>
               <div class="view" id="view-saved" role="tabpanel" aria-label="Saved" hidden>
                 <h5>Saved</h5><p class="sub" id="saved-sub">Places you're curious about.</p>
                 <div id="saved-list"></div>
@@ -398,6 +452,7 @@
             </div>
             <div class="tabbar" role="tablist" aria-label="App sections">
               <button class="tab" role="tab" data-view="explore" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Explore</button>
+              <button class="tab" role="tab" data-view="community" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2A4.5 4.5 0 0 1 21 18.5"/></svg>Community<span class="badge" id="gbadge">0</span></button>
               <button class="tab" role="tab" data-view="saved" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Saved<span class="badge" id="badge">0</span></button>
               <button class="tab" role="tab" data-view="trip" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Trips</button>
             </div>
@@ -453,13 +508,28 @@
       </div>
     </section>
 
-    <section class="together" id="together">
-      <div class="wrap">
-        <div class="kicker reveal">Explore together</div>
-        <h2 class="title reveal d1">Find your people, wherever they're headed.</h2>
-        <p class="intro reveal d2">Follow travelers whose taste you trust, see who's going where you're going, and team up when your plans overlap. Always on your terms.</p>
-        <div class="buddies" id="buddies"></div>
+    <section class="community wrap" id="community">
+      <div class="community-grid">
+        <div>
+          <div class="kicker reveal">Community</div>
+          <h2 class="title reveal d1">Explore shows you the world. Community shows you the people in it.</h2>
+          <p class="intro reveal d2">Join communities around the places and passions you care about, like Japan Travel Club, Solo Explorers or Food Trails. Ask before you go, share what you found, and follow travelers whose taste you trust.</p>
+          <div class="kinds reveal d2" aria-label="Kinds of posts">
+            <span class="kind"><i aria-hidden="true">✦</i>Discussions</span>
+            <span class="kind"><i aria-hidden="true">?</i>Questions</span>
+            <span class="kind"><i aria-hidden="true">✳</i>Recommendations</span>
+            <span class="kind"><i aria-hidden="true">✈</i>Experiences</span>
+          </div>
+          <div class="features">
+            <div class="feature reveal"><div class="f-icon" aria-hidden="true">◎</div><div><h3>Communities for places and passions</h3><p>From a city or a country to hiking, food or solo travel. Join in one tap, or start your own.</p></div></div>
+            <div class="feature reveal d1"><div class="f-icon" aria-hidden="true">✳</div><div><h3>Good finds become hidden gems</h3><p>The best community recommendations can be suggested for Explore. Every one is reviewed before it's published.</p></div></div>
+            <div class="feature reveal d2"><div class="f-icon" aria-hidden="true">✓</div><div><h3>Safe by design</h3><p>Community moderators, reporting and blocking, private profiles, and no public email addresses. Travel talk, not noise.</p></div></div>
+          </div>
+        </div>
+        <div class="stack reveal d1" aria-hidden="true" id="stack"></div>
       </div>
+      <h3 class="buddies-title reveal">See who's heading where you are.</h3>
+      <div class="buddies" id="buddies"></div>
     </section>
 
     <section class="waitlist" id="waitlist">
@@ -473,6 +543,7 @@
             <li class="reveal">Early access before the public launch</li>
             <li class="reveal d1">A founding-explorer stamp on your Passport</li>
             <li class="reveal d2">A say in which cities we map first</li>
+            <li class="reveal d3">A head start in the first communities</li>
           </ul>
         </div>
         <div class="form-card reveal d1">
