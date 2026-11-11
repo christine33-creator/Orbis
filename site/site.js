@@ -12,7 +12,6 @@
     location.replace(APP_URL + location.search + location.hash);
     return;
   }
-  document.querySelectorAll("[data-app-link]").forEach(function (a) { a.href = APP_URL; });
 
   document.documentElement.classList.add("js");
   var reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
