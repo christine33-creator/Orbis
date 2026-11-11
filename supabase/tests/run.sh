@@ -20,5 +20,6 @@ DB=(${PSQL[@]} -d orbis)
 "${DB[@]}" -f supabase/tests/supabase_stubs.sql
 for f in supabase/migrations/*.sql; do echo "migrate: $f"; "${DB[@]}" -f "$f"; done
 echo "seed: supabase/seed.sql"; "${DB[@]}" -f supabase/seed.sql
+echo "seed again (must be re-runnable)"; "${DB[@]}" -f supabase/seed.sql >/dev/null
 for f in supabase/tests/test_*.sql; do echo "test: $f"; "${DB[@]}" -f "$f" >/dev/null 2>"$DIR/out" || { sed 's/^psql:[^ ]* //' "$DIR/out"; exit 1; }; sed 's/^psql:[^ ]* NOTICE:  /  /' "$DIR/out"; done
 echo "ALL DATABASE TESTS PASSED"

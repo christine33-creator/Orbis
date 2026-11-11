@@ -99,7 +99,7 @@ export function GemCard({ gem, seed = 0, wide, reasons }: { gem: Gem; seed?: num
         ) : null}
         {gem.author && (
           <button onClick={() => open({ type: "profile", id: gem.author!.id })} className="mt-3 flex items-center gap-2 text-[12px] text-muted">
-            <Avatar name={gem.author.name || gem.author.handle} hue={gem.author.hue} size={20} /> {t("cards.foundBy")} <b className="text-ink">@{gem.author.handle}</b>
+            <Avatar name={gem.author.name || gem.author.handle} hue={gem.author.hue} src={gem.author.avatarUrl} size={20} /> {t("cards.foundBy")} <b className="text-ink">@{gem.author.handle}</b>
           </button>
         )}
       </div>

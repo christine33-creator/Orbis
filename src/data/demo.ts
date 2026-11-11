@@ -22,3 +22,35 @@ export const DEMO_TIPS: { destinationId: string; authorId: string; category: str
   { destinationId: "patagonia", authorId: "demo-mateo", category: "Gear", body: "Trekking poles are essential on the descent from Base Torres. Gusts can hit 100 km/h.", votes: 301 },
   { destinationId: "tokyo", authorId: "demo-kenji", category: "Food", body: "At ticket-machine ramen shops, the top-left button is almost always the house special.", votes: 412 },
 ];
+
+/** Demo-only community posts by the fictional people above. Never written to production. */
+export const DEMO_POSTS: {
+  key: string; community: string; authorId: string; kind: "discussion" | "question" | "recommendation" | "experience";
+  title: string; body: string; destinationId: string | null; place: string; hoursAgo: number; likedBy: string[];
+  comments: { authorId: string; body: string }[];
+}[] = [
+  {
+    key: "kyoto-moss", community: "japan-travel-club", authorId: "demo-chiyo", kind: "recommendation", title: "Gio-ji moss garden before 9 AM",
+    body: "Most people rush to Kokedera, which needs a postcard booking. Gio-ji is a ten minute walk from the Arashiyama bamboo grove, costs 300 yen and is almost empty right at opening. Go after rain for the deepest green.",
+    destinationId: "kyoto", place: "Gio-ji, Arashiyama", hoursAgo: 5, likedBy: ["demo-elena", "demo-kenji"],
+    comments: [{ authorId: "demo-elena", body: "Went last spring on your tip. Unreal light through the maples." }],
+  },
+  {
+    key: "jr-pass", community: "japan-travel-club", authorId: "demo-elena", kind: "question", title: "Is the JR Pass still worth it for Tokyo → Kyoto → Osaka?",
+    body: "Ten days, mostly Tokyo and Kansai, one day trip to Nara. After the price rise I'm not sure the pass pays off. What did you do?",
+    destinationId: "tokyo", place: "", hoursAgo: 20, likedBy: ["demo-marcos"],
+    comments: [{ authorId: "demo-kenji", body: "For that route, single Shinkansen tickets plus an ICOCA card came out cheaper for me." }, { authorId: "demo-chiyo", body: "Agree with Kenji. Buy the Kansai trains as you go." }],
+  },
+  {
+    key: "solo-lisbon", community: "solo-explorers", authorId: "demo-marcos", kind: "experience", title: "Three weeks solo in Lisbon: what worked",
+    body: "Coworking in Cais do Sodré was the easiest way to meet people. Thursday free walking tours from Praça do Comércio turned into dinners. Alfama at night felt safe, but watch the cobbles after rain.",
+    destinationId: "lisbon", place: "Cais do Sodré", hoursAgo: 30, likedBy: ["demo-elena", "demo-mateo", "demo-chiyo"],
+    comments: [],
+  },
+  {
+    key: "w-trek", community: "trail-summit", authorId: "demo-mateo", kind: "discussion", title: "W Trek: east to west or west to east?",
+    body: "I've guided both directions. East to west saves Base Torres for the first full day when legs are fresh, west to east ends with the towers at sunrise. Which did you prefer?",
+    destinationId: "patagonia", place: "Torres del Paine", hoursAgo: 48, likedBy: ["demo-kenji"],
+    comments: [{ authorId: "demo-marcos", body: "West to east. Ending at the towers felt like the right finale." }],
+  },
+];

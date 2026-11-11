@@ -1,12 +1,14 @@
 import { useState } from "react";
 import {
   ArrowUpRight, AtSign, BadgeCheck, Ban, CalendarDays, CalendarPlus, ChevronUp, Flag, Gem as GemIcon, Lightbulb, MapPin,
-  MapPinPlus, Navigation, Plus, Route, Trash2, UserPlus, Check,
+  MapPinPlus, MessagesSquare, Navigation, Plus, Route, Trash2, UserPlus, Users, Check,
 } from "lucide-react";
 import {
-  useBlocks, useDeleteGem, useDestination, useEvents, useFollowCounts, useFollowing, useGems, useMe, useProfile,
-  useTipVotes, useTips, useToggleBlock, useToggleFollow, useToggleTipVote,
+  useBlocks, useCommunitiesOf, useDeleteGem, useDestination, useEvents, useFollowing, useGems, useMe, usePosts, useProfile,
+  useProfileStats, useTipVotes, useTips, useToggleBlock, useToggleFollow, useToggleTipVote,
 } from "../../api/hooks";
+import { PlaceCommunity } from "./Community";
+import { CommunityCover } from "../../components/CommunityCards";
 import { useUi } from "../../store/ui";
 import { useRequireAuth } from "../../components/auth";
 import { Avatar, Button, Card, PULSE_META, Sheet, STYLE_META, Tag, GEM_CATEGORY_META } from "../../components/ui";
@@ -86,6 +88,8 @@ export function DestinationSheet({ id, onClose }: { id: string; onClose: () => v
         </section>
       )}
 
+      <div className="mt-7"><PlaceCommunity destinationId={d.id} country={d.country} /></div>
+
       <FieldNotes destinationId={d.id} />
     </Sheet>
   );
@@ -144,6 +148,13 @@ export function GemSheet({ id, onClose }: { id: string; onClose: () => void }) {
         </div>
       )}
       <div className="mt-4 flex flex-wrap gap-2">{g.styles.map((st) => <Tag key={st} icon={STYLE_META[st].icon}>{t(`styles.${st}`)}</Tag>)}</div>
+      {g.sourcePostId && (
+        <button onClick={() => open({ type: "post", id: g.sourcePostId! })} className="mt-5 flex w-full items-center gap-3 rounded-2xl bg-card p-3 text-left shadow-sm">
+          <MessagesSquare size={18} className="text-accent" />
+          <span className="flex-1 text-[14px] font-semibold">{t("community.fromRecommendation")}</span>
+          <ArrowUpRight size={17} />
+        </button>
+      )}
       <a href={mapsUrl(g.lat, g.lng)} target="_blank" rel="noreferrer noopener" className="mt-5 flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm">
         <Navigation size={18} className="text-accent" />
         <span className="flex-1 text-[14px] font-semibold">{t("detail.directions")}</span>
@@ -152,7 +163,7 @@ export function GemSheet({ id, onClose }: { id: string; onClose: () => void }) {
       <div className="mt-5 flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm">
         {g.author ? (
           <button onClick={() => open({ type: "profile", id: g.author!.id })} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-            <Avatar name={g.author.name || g.author.handle} hue={g.author.hue} size={40} />
+            <Avatar name={g.author.name || g.author.handle} hue={g.author.hue} src={g.author.avatarUrl} size={40} />
             <div className="min-w-0"><div className="text-[12px] text-muted">{t("detail.foundBy")}</div><div className="truncate font-bold">@{g.author.handle}</div></div>
           </button>
         ) : (
@@ -223,8 +234,10 @@ export function EventSheet({ id, onClose }: { id: string; onClose: () => void })
 export function ProfileSheet({ id, onClose }: { id: string; onClose: () => void }) {
   const { data: p, isLoading } = useProfile(id);
   const { data: me } = useMe();
-  const { data: counts } = useFollowCounts(id);
+  const { data: stats } = useProfileStats(id);
   const { data: following = [] } = useFollowing();
+  const { data: theirCommunities = [] } = useCommunitiesOf(id);
+  const { data: theirPosts = [] } = usePosts({ authorId: id, limit: 5 });
   const { data: blocks = [] } = useBlocks();
   const { data: gems = [] } = useGems();
   const follow = useToggleFollow();
@@ -244,15 +257,20 @@ export function ProfileSheet({ id, onClose }: { id: string; onClose: () => void 
   return (
     <Sheet title={t("detail.explorer")} onClose={onClose}>
       <div className="text-center">
-        <Avatar name={p.name || p.handle} hue={p.hue} size={84} ring className="mx-auto" />
+        <Avatar name={p.name || p.handle} hue={p.hue} src={p.avatarUrl} size={84} ring className="mx-auto" />
         <h2 className="font-display mt-3 text-[26px] font-semibold">{p.name || `@${p.handle}`}</h2>
         <div className="text-[13px] text-muted">@{p.handle}{p.home ? ` · ${p.home}` : ""}</div>
         <div className="mt-2"><Tag tone="accent" icon={BadgeCheck}>{t("detail.lvl", { level: lvl.level, tier: t(`tiers.${lvl.tier}`) })}</Tag></div>
         {p.bio && <p className="mx-auto mt-3 max-w-[300px] text-[14px]">{p.bio}</p>}
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        {[{ n: p.visited.length, l: t("common.countries") }, { n: counts?.followers ?? 0, l: t("common.followers") }, { n: theirGems.length, l: t("common.gems") }].map((x) => (
-          <Card key={x.l} className="py-3"><div className="font-display text-[22px] font-semibold">{x.n}</div><div className="eyebrow text-[9.5px] text-muted">{x.l}</div></Card>
+      <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+        {[
+          { n: p.visited.length, l: t("common.countries") },
+          { n: stats?.followers ?? 0, l: t("common.followers"), go: () => open({ type: "people", userId: p.id, which: "followers" }) },
+          { n: stats?.following ?? 0, l: t("common.following"), go: () => open({ type: "people", userId: p.id, which: "following" }) },
+          { n: stats?.posts ?? 0, l: t("community.postsLabel") },
+        ].map((x) => (
+          <Card key={x.l} onClick={x.go} className="px-1 py-3 text-center"><div className="font-display text-[22px] font-semibold">{x.n}</div><div className="text-[10px] leading-tight font-bold tracking-wide break-words text-muted uppercase">{x.l}</div></Card>
         ))}
       </div>
       {!isMe && (
@@ -264,6 +282,32 @@ export function ProfileSheet({ id, onClose }: { id: string; onClose: () => void 
         </div>
       )}
       {p.styles.length > 0 && <div className="mt-5 flex flex-wrap gap-2">{p.styles.map((st) => <Tag key={st} icon={STYLE_META[st].icon}>{t(`styles.${st}`)}</Tag>)}</div>}
+      {theirCommunities.length > 0 && (
+        <section className="mt-5">
+          <h3 className="flex items-center gap-1.5 text-[16px] font-bold"><Users size={16} className="text-accent" /> {t("community.theirCommunities")}</h3>
+          <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
+            {theirCommunities.map((c) => (
+              <button key={c.id} onClick={() => open({ type: "community", id: c.id })} className="flex shrink-0 items-center gap-2 rounded-full bg-card py-1 pr-3.5 pl-1 shadow-sm">
+                <span className="h-8 w-8 overflow-hidden rounded-full"><CommunityCover c={c} /></span>
+                <span className="text-[13px] font-bold">{c.name}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+      {theirPosts.filter((x) => x.status === "published").length > 0 && (
+        <section className="mt-5">
+          <h3 className="flex items-center gap-1.5 text-[16px] font-bold"><MessagesSquare size={16} className="text-accent" /> {t("community.recentPosts")}</h3>
+          <div className="mt-2 space-y-2">
+            {theirPosts.filter((x) => x.status === "published").map((x) => (
+              <button key={x.id} onClick={() => open({ type: "post", id: x.id })} className="block w-full rounded-2xl bg-card p-3 text-left shadow-sm">
+                <div className="text-[11px] font-bold tracking-wide text-accent uppercase">{t(`community.kinds.${x.kind}`)} · {x.community?.name}</div>
+                <div className="mt-0.5 line-clamp-2 text-[14px] font-bold">{x.title}</div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       {theirGems.length > 0 && (
         <section className="mt-5">
           <h3 className="flex items-center gap-1.5 text-[16px] font-bold"><GemIcon size={16} className="text-accent" /> {t("detail.gemsTheyFound")}</h3>

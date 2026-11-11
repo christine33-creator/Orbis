@@ -32,8 +32,10 @@ npm run dev
 | P0 | Moderation & safety | Report, block, auto-hold for links and contact details, auto-hide after 3 reports, moderation queue, rate limits, account deletion, photo location stripping |
 | P1 | Passport & XP | `screens/Passport.tsx`; XP is granted by the database so it can't be faked |
 | P1 | Global Pulse automation | `supabase/functions/sync-events` (Ticketmaster) |
-| P1 | Following | Profile pages |
-| P2 | Direct messaging, Buddy Beacon & groups | Not in this release. An earlier prototype of groups and buddy matching is in git history (commit `f09c0a5`) |
+| P1 | Following | Profile pages, follower and following lists |
+| P1 | Community: communities, membership, posts with photos, comments, likes, saved posts, community moderators | Community tab (`screens/Community.tsx`, `screens/sheets/Community.tsx`). Plan and security model: [docs/community-plan.md](docs/community-plan.md) |
+| P1 | Profile photos | Edit profile (Supabase Storage `avatars` bucket) |
+| P2 | Direct messaging, real-time chat, meetups | Not in this release. Direct messages, when added, start with mutual followers only |
 
 ## How it's built
 

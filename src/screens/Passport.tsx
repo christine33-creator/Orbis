@@ -1,8 +1,9 @@
 import { useState } from "react";
 import {
-  ArrowUpRight, AtSign, Award, Bookmark, Check, Gem, Globe, Heart, MapPin, Pencil, Route, Settings, Share2, Shield, Stamp,
+  ArrowUpRight, AtSign, Award, Bookmark, Check, Gem, Globe, Heart, MapPin, MessagesSquare, Pencil, Route, Settings, Share2, Shield, Stamp, Users,
 } from "lucide-react";
-import { useFollowCounts, useFollowing, useGems, useMe, useSaves, useTrips } from "../api/hooks";
+import { useCommunitiesOf, useFollowing, useGems, useMe, usePosts, useProfileStats, useSaves, useTrips } from "../api/hooks";
+import { CommunityCover } from "../components/CommunityCards";
 import { useUi } from "../store/ui";
 import { BADGES, levelFor } from "../lib/progress";
 import { persona } from "../lib/persona";
@@ -14,7 +15,7 @@ import { APP_NAME, cx, prettyCountry, shareText } from "../lib/util";
 import type { SocialLinks } from "../types";
 import { useTranslation } from "react-i18next";
 
-const BADGE_ICONS = { gem: Gem, bookmark: Bookmark, globe: Globe, route: Route, heart: Heart };
+const BADGE_ICONS = { gem: Gem, bookmark: Bookmark, globe: Globe, route: Route, heart: Heart, message: MessagesSquare };
 
 export const SOCIAL_META: Record<keyof SocialLinks, { label: string; url: (h: string) => string }> = {
   instagram: { label: "Instagram", url: (h) => `https://instagram.com/${encodeURIComponent(h)}` },
@@ -31,8 +32,11 @@ export function Passport() {
   const { data: saves = [] } = useSaves();
   const { data: trips = [] } = useTrips();
   const { data: following = [] } = useFollowing();
-  const { data: counts } = useFollowCounts(me?.id ?? "");
+  const { data: counts } = useProfileStats(me?.id ?? "");
+  const { data: myCommunities = [] } = useCommunitiesOf(me?.id ?? "");
+  const { data: myPosts = [] } = usePosts({ authorId: me?.id ?? "", limit: 50 }, !!me);
   const open = useUi((s) => s.open);
+  const setTab = useUi((s) => s.setTab);
   const [copied, setCopied] = useState(false);
   const { t } = useTranslation();
 
@@ -42,7 +46,7 @@ export function Passport() {
   const lvl = levelFor(me.xp);
   const per = persona(me);
   const mine = gems.filter((g) => g.authorId === me.id);
-  const badgeInput = { gemsShared: mine.filter((g) => g.status === "published").length, saves: saves.length, countries: me.visited.length, tripsPlanned: trips.length, following: following.length };
+  const badgeInput = { gemsShared: mine.filter((g) => g.status === "published").length, saves: saves.length, countries: me.visited.length, tripsPlanned: trips.length, following: following.length, posts: myPosts.filter((p) => p.status === "published").length };
 
   const shareProfile = async () => {
     if (await shareText(me.name, t("passport.shareText", { app: APP_NAME, handle: me.handle, persona: t(`persona.${per}.title`), slogan: t("brand.slogan") }))) {
@@ -56,7 +60,7 @@ export function Passport() {
       <section className="relative pt-2 text-center">
         <Globe className="absolute top-6 right-0 text-line" size={150} strokeWidth={1} aria-hidden />
         <div className="relative mx-auto w-fit rounded-full p-1 shadow-[0_0_0_3px_#F26B4F,0_0_30px_rgba(242,107,79,0.4)]">
-          <Avatar name={me.name || me.handle} hue={me.hue} size={104} />
+          <Avatar name={me.name || me.handle} hue={me.hue} src={me.avatarUrl} size={104} />
         </div>
         <span className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[11px] font-bold tracking-wider text-accent uppercase">
           <Award size={13} /> {t("passport.levelTier", { level: lvl.level, tier: t(`tiers.${lvl.tier}`) })}
@@ -80,14 +84,17 @@ export function Passport() {
         {[
           { n: me.visited.length, l: t("common.countries") },
           { n: badgeInput.gemsShared, l: t("passport.gemsShared"), accent: true },
-          { n: counts?.followers ?? 0, l: t("common.followers") },
-          { n: counts?.following ?? 0, l: t("common.following") },
-        ].map((x) => (
-          <div key={x.l}>
-            <div className={cx("font-display text-[26px] font-semibold", x.accent && "text-accent")}>{x.n}</div>
-            <div className="eyebrow mt-0.5 text-[9.5px] text-muted">{x.l}</div>
-          </div>
-        ))}
+          { n: counts?.followers ?? 0, l: t("common.followers"), go: () => open({ type: "people", userId: me.id, which: "followers" }) },
+          { n: counts?.following ?? 0, l: t("common.following"), go: () => open({ type: "people", userId: me.id, which: "following" }) },
+        ].map((x) => {
+          const inner = (
+            <>
+              <div className={cx("font-display text-[26px] font-semibold", x.accent && "text-accent")}>{x.n}</div>
+              <div className="eyebrow mt-0.5 truncate px-1 text-[9.5px] text-muted">{x.l}</div>
+            </>
+          );
+          return x.go ? <button key={x.l} onClick={x.go}>{inner}</button> : <div key={x.l}>{inner}</div>;
+        })}
       </Card>
 
       {(me.role === "moderator" || me.role === "admin") && (
@@ -147,6 +154,41 @@ export function Passport() {
           ))}
           {mine.length === 0 && <p className="rounded-2xl bg-chip p-3 text-[13px] text-muted">{t("passport.noGems")}</p>}
         </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-[19px] font-bold"><Users size={19} className="text-accent" /> {t("community.yourCommunities")}</h2>
+          <button onClick={() => setTab("community")} className="text-[13px] font-bold text-accent">{t("community.findMore")}</button>
+        </div>
+        <div className="mt-3 space-y-2">
+          {myCommunities.map((c) => (
+            <button key={c.id} onClick={() => open({ type: "community", id: c.id })} className="flex w-full items-center gap-3 rounded-2xl bg-chip p-2.5 text-left">
+              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl"><CommunityCover c={c} /></div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[14px] font-bold">{c.name}</div>
+                <div className="text-[12px] text-muted">{t("community.members", { count: c.memberCount, n: c.memberCount })}</div>
+              </div>
+            </button>
+          ))}
+          {myCommunities.length === 0 && <p className="rounded-2xl bg-chip p-3 text-[13px] text-muted">{t("community.noGroupsBody")}</p>}
+        </div>
+        {myPosts.length > 0 && (
+          <>
+            <h3 className="mt-4 flex items-center gap-1.5 text-[15px] font-bold"><MessagesSquare size={16} className="text-accent" /> {t("community.yourPosts")}</h3>
+            <div className="mt-2 space-y-2">
+              {myPosts.slice(0, 5).map((p) => (
+                <button key={p.id} onClick={() => open({ type: "post", id: p.id })} className="flex w-full items-center gap-2 rounded-2xl bg-chip p-3 text-left">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[14px] font-bold">{p.title}</div>
+                    <div className="truncate text-[12px] text-muted">{p.community?.name} · {t("community.postStats", { likes: p.likes, comments: p.comments })}</div>
+                  </div>
+                  <Tag tone={p.status === "published" ? "green" : "accent"}>{t(`passport.status.${p.status}`)}</Tag>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </Card>
 
       <Card className="p-5">

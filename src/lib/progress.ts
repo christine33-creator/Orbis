@@ -38,12 +38,14 @@ export interface BadgeInput {
   countries: number;
   tripsPlanned: number;
   following: number;
+  posts: number;
 }
 
-export const BADGES: { id: "gems" | "collector" | "planner" | "globe" | "social"; icon: "gem" | "bookmark" | "globe" | "route" | "heart"; progress: (s: BadgeInput) => [number, number] }[] = [
+export const BADGES: { id: "gems" | "collector" | "planner" | "globe" | "social" | "voice"; icon: "gem" | "bookmark" | "globe" | "route" | "heart" | "message"; progress: (s: BadgeInput) => [number, number] }[] = [
   { id: "gems", icon: "gem", progress: (s) => [s.gemsShared, 3] },
   { id: "collector", icon: "bookmark", progress: (s) => [s.saves, 10] },
   { id: "planner", icon: "route", progress: (s) => [s.tripsPlanned, 3] },
   { id: "globe", icon: "globe", progress: (s) => [s.countries, 10] },
   { id: "social", icon: "heart", progress: (s) => [s.following, 5] },
+  { id: "voice", icon: "message", progress: (s) => [s.posts, 3] },
 ];

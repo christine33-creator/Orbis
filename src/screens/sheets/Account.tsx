@@ -19,6 +19,7 @@ import { APP_NAME, cx } from "../../lib/util";
 import { errorText } from "../../i18n/errors";
 import { en } from "../../i18n/locales/en";
 import type { Report } from "../../types";
+import type { ModerationTarget } from "../../api/types";
 
 /* ------------------------------------------------------------------ Auth */
 
@@ -470,8 +471,8 @@ export function ModerationSheet({ onClose }: { onClose: () => void }) {
   const [note, setNote] = useState("");
 
   if (!isMod) return <Sheet title={t("moderation.title")} onClose={onClose}><p className="py-6 text-center text-muted">{t("moderation.onlyMods")}</p></Sheet>;
-  const total = (data?.gems.length ?? 0) + (data?.tips.length ?? 0) + (data?.reports.length ?? 0);
-  const act = (type: "gem" | "tip", id: string, status: "published" | "rejected") => moderate.mutate({ type, id, status, note });
+  const total = (data?.gems.length ?? 0) + (data?.tips.length ?? 0) + (data?.posts.length ?? 0) + (data?.comments.length ?? 0) + (data?.communities.length ?? 0) + (data?.reports.length ?? 0);
+  const act = (type: ModerationTarget, id: string, status: "published" | "rejected") => moderate.mutate({ type, id, status, note });
   const by = (a: { handle: string } | null) => t("moderation.by", { who: a ? `@${a.handle}` : t("common.privateExplorer") });
 
   return (
@@ -522,6 +523,57 @@ export function ModerationSheet({ onClose }: { onClose: () => void }) {
           ))}
         </section>
       )}
+      {data && data.communities.length > 0 && (
+        <section className="mt-5 space-y-2">
+          <h2 className="eyebrow text-muted">{t("moderation.communitiesToReview", { count: data.communities.length })}</h2>
+          {data.communities.map((c) => (
+            <Card key={c.id} className="p-3">
+              <button onClick={() => open({ type: "community", id: c.id })} className="w-full text-left">
+                <div className="truncate font-bold">{c.name}</div>
+                <div className="line-clamp-2 text-[12.5px] text-muted">{c.description}</div>
+              </button>
+              <div className="mt-2 flex items-center gap-2">
+                <Tag tone="accent">{c.status === "pending" ? t("moderation.flagged") : t("community.status.hidden")}</Tag>
+                <span className="flex-1" />
+                <QueueButtons onApprove={() => act("community", c.id, "published")} onReject={() => act("community", c.id, "rejected")} />
+              </div>
+            </Card>
+          ))}
+        </section>
+      )}
+      {data && data.posts.length > 0 && (
+        <section className="mt-5 space-y-2">
+          <h2 className="eyebrow text-muted">{t("moderation.postsToReview", { count: data.posts.length })}</h2>
+          {data.posts.map((p) => (
+            <Card key={p.id} className="p-3">
+              <button onClick={() => open({ type: "post", id: p.id })} className="w-full text-left">
+                <div className="text-[11px] font-bold tracking-wide text-accent uppercase">{p.community?.name}</div>
+                <div className="truncate font-bold">{p.title}</div>
+                <div className="line-clamp-2 text-[12.5px] text-muted">{p.body}</div>
+              </button>
+              <div className="mt-2 flex items-center gap-2">
+                <Tag tone="accent">{p.status === "pending" ? t("moderation.flagged") : t("moderation.reportsN", { count: p.reports })}</Tag>
+                <span className="flex-1 truncate text-[12px] text-muted">{by(p.author)}</span>
+                <QueueButtons onApprove={() => act("post", p.id, "published")} onReject={() => act("post", p.id, "rejected")} />
+              </div>
+            </Card>
+          ))}
+        </section>
+      )}
+      {data && data.comments.length > 0 && (
+        <section className="mt-5 space-y-2">
+          <h2 className="eyebrow text-muted">{t("moderation.commentsToReview", { count: data.comments.length })}</h2>
+          {data.comments.map((c) => (
+            <Card key={c.id} className="p-3">
+              <button onClick={() => open({ type: "post", id: c.postId })} className="w-full text-left text-[13.5px]">{c.body}</button>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="flex-1 truncate text-[12px] text-muted">{by(c.author)}</span>
+                <QueueButtons onApprove={() => act("comment", c.id, "published")} onReject={() => act("comment", c.id, "rejected")} />
+              </div>
+            </Card>
+          ))}
+        </section>
+      )}
       {data && data.reports.length > 0 && (
         <section className="mt-5 space-y-2">
           <h2 className="eyebrow text-muted">{t("moderation.openReports", { count: data.reports.length })}</h2>
@@ -549,8 +601,13 @@ function ReportRow({ r, onResolve }: { r: Report; onResolve: (s: "resolved" | "d
     if (r.targetType === "gem") open({ type: "gem", id: r.targetId });
     else if (r.targetType === "profile") open({ type: "profile", id: r.targetId });
     else if (r.targetType === "event") open({ type: "event", id: r.targetId });
+    else if (r.targetType === "community") open({ type: "community", id: r.targetId });
+    else if (r.targetType === "post") open({ type: "post", id: r.targetId });
   };
-  const kind = { gem: t("map.kindGem"), tip: t("detail.fieldNotes"), profile: t("detail.profile"), event: t("map.kindEvent") }[r.targetType];
+  const kind = {
+    gem: t("map.kindGem"), tip: t("detail.fieldNotes"), profile: t("detail.profile"), event: t("map.kindEvent"),
+    community: t("community.community"), post: t("community.post"), comment: t("community.what.comment"),
+  }[r.targetType];
   return (
     <Card className="p-3">
       <div className="flex items-center gap-2">
@@ -558,7 +615,7 @@ function ReportRow({ r, onResolve }: { r: Report; onResolve: (s: "resolved" | "d
         <span className="text-[13.5px] font-bold">{t(`forms.reasons.${r.reason}.l`)}</span>
         <span className="text-[12px] text-muted">{t("moderation.onA", { type: kind.toLowerCase() })}</span>
         <span className="flex-1" />
-        {r.targetType !== "tip" && <button onClick={view} className="text-[12px] font-bold text-accent">{t("moderation.view")}</button>}
+        {r.targetType !== "tip" && r.targetType !== "comment" && <button onClick={view} className="text-[12px] font-bold text-accent">{t("moderation.view")}</button>}
       </div>
       {r.details && <p className="mt-1 text-[13px] text-muted">"{r.details}"</p>}
       <div className="mt-2 flex justify-end gap-1.5">
@@ -578,6 +635,8 @@ export function XpLogSheet({ onClose }: { onClose: () => void }) {
     [t("points.shareGem"), XP_AWARDS.gem_published], [t("points.planTrip"), XP_AWARDS.trip_created], [t("points.publishNote"), XP_AWARDS.tip_published],
     [t("points.checkIn"), XP_AWARDS.stop_done], [t("points.stamp"), XP_AWARDS.country_stamped], [t("points.save"), XP_AWARDS.saved],
     [t("points.upvote"), XP_AWARDS.upvote_received], [t("points.follow"), XP_AWARDS.followed],
+    [t("points.post"), XP_AWARDS.post_published], [t("points.comment"), XP_AWARDS.comment_published], [t("points.like"), XP_AWARDS.like_received],
+    [t("points.join"), XP_AWARDS.community_joined], [t("points.createCommunity"), XP_AWARDS.community_created],
   ] as const;
   const label = (reason: string) => (reason in en.xp ? t(`xp.${reason as keyof typeof en.xp}`) : reason);
   return (

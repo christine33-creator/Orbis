@@ -82,14 +82,22 @@ update public.profiles set role = 'admin' where handle = 'your_handle';
 A **Moderation queue** button then appears on your Passport. Review it daily at launch.
 
 How moderation works:
-- Gems and field notes containing links, phone numbers or email addresses are held for review.
+- Gems, field notes, communities, posts and comments containing links, phone numbers or email addresses are held for review.
+- Hidden gems suggested from a Community recommendation are always held for review before they appear in Explore.
+- Community owners can appoint moderators. Owners and community moderators can hide posts and comments in their own community; site moderators (step 4) can act everywhere.
 - Anything reported by 3 different people is hidden until a moderator decides.
 - Add words to auto-hold in **Table Editor → blocked_terms**.
-- People can be limited per day: 10 gems, 20 notes, 20 trips, 30 reports.
+- People can be limited per day: 10 gems, 20 notes, 20 trips, 30 reports, 3 new communities, 20 posts, 100 comments.
 
 ## 5. Deploy the app (Required)
 
 On Vercel or Netlify: import the GitHub repo, set build command `npm run build`, output directory `dist`, and add the two `VITE_SUPABASE_*` environment variables. Then point your domain at it and update the Site URL from step 3.
+
+### Applying new migrations
+
+Apply migrations in order with `supabase db push` (or paste each file into the SQL Editor). One needs care:
+
+- `20261111000008_profile_privacy.sql` hides private profile settings from the API. Apply it **after** the app version that includes Community is live, because older app versions read every profile column.
 
 The app lives at **app.discoverorbis.com** (Vercel). The marketing site, discoverorbis.com, is hosted separately on Netlify from the `site/` folder.
 
@@ -149,4 +157,4 @@ Unit tests: suggestions, moderation rules, demo backend, event mapping.
 npm run test:db
 ```
 
-Runs the migrations, seed and 61 security and behaviour checks against a throwaway local PostgreSQL 16. Both run in CI on every pull request.
+Runs the migrations, seed and 170+ security and behaviour checks (including Community permissions) against a throwaway local PostgreSQL 16. Both run in CI on every pull request.
