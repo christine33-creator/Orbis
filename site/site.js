@@ -56,7 +56,7 @@
   }, { threshold: 0.15 }) : null;
   document.querySelectorAll(".reveal").forEach(function (el) { if (io && !reduceMotion) io.observe(el); else { el.classList.add("in"); if (el.id === "passport-card") animatePassport(); } });
 
-  var words = ["Find hidden gems.", "Catch the festival.", "Plan it together.", "Go further."];
+  var words = ["Find hidden gems.", "Find your people.", "Catch the festival.", "Plan it together.", "Go further."];
   var word = $("rotator-word");
   if (!reduceMotion) {
     var wi = 0;
@@ -78,6 +78,8 @@
     ["Aiko", "saved", "Otagi Nenbutsu-ji", "Kyoto · 2 min ago"],
     ["Leo", "shared a gem in", "Matera", "+40 XP · just now"],
     ["Nina", "planned 4 days in", "Lofoten", "with 2 friends"],
+    ["Mei", "joined", "Japan Travel Club", "Community · 5 min ago"],
+    ["Omar", "asked in", "Solo Explorers", "Is Tbilisi easy solo?"],
     ["Tomás", "is going to", "Las Fallas", "Valencia · March"],
     ["Sam", "found", "a rooftop tasca", "Lisbon · Alfama"],
     ["Priya", "earned the", "Pathfinder stamp", "Level 7 · Passport"],
@@ -179,7 +181,7 @@
   ];
   var CATS = { all: "All", culture: "Culture", food: "Food", nature: "Nature", views: "Views" };
   var heartSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
-  var saved = [], xp = 120, planned = false, userTouchedChips = false;
+  var saved = [], xp = 120, planned = false, userTouchedChips = false, joined = [], liked = false;
 
   $("filters").innerHTML = Object.keys(CATS).map(function (k) { return '<button type="button" class="f-chip" data-cat="' + k + '" aria-pressed="' + (k === "all") + '">' + CATS[k] + "</button>"; }).join("");
   $("feed").innerHTML = GEMS.map(function (g, i) {
@@ -240,10 +242,11 @@
   });
 
   function show(view) {
-    ["explore", "saved", "trip"].forEach(function (v) { $("view-" + v).hidden = v !== view; });
+    ["explore", "community", "saved", "trip"].forEach(function (v) { $("view-" + v).hidden = v !== view; });
     document.querySelectorAll(".tab").forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.view === view)); });
     document.querySelectorAll(".step").forEach(function (s) { s.setAttribute("aria-current", String(s.dataset.step === view)); });
     if (view === "trip" && !planned) buildTrip();
+    if (view === "community") renderGroups();
   }
   function markStep(step, done) { var el = document.querySelector('.step[data-step="' + (step === "saved" ? "explore" : step) + '"]'); if (el) el.classList.toggle("done", done); }
   document.querySelector(".tabbar").addEventListener("click", function (e) { var t = e.target.closest(".tab"); if (t) show(t.dataset.view); });
@@ -265,11 +268,51 @@
     }).join("");
     if (saved.length) {
       planned = true; setXp(25, $("trip-title")); markStep("trip", true); document.querySelector('.step[data-step="saved"]').classList.add("done");
-      hint("That's Orbis: discover, save, plan. Join the waitlist to try the real thing.");
+      hint("Nice plan. Now open Community to meet people who've been there.");
       suggestInterests();
     }
   }
   $("plan-btn").addEventListener("click", function () { show("trip"); });
+
+  // Community tab in the phone: join groups picked from what the visitor saved.
+  var GROUPS = [
+    { id: "japan", name: "Japan Travel Club", note: "Temples, trains and tiny bars", members: 1240, motif: "temple", pal: "moss", city: "Kyoto" },
+    { id: "food", name: "Food Trails", note: "Markets and street food", members: 2210, motif: "market", pal: "gold", cat: "food" },
+    { id: "solo", name: "Solo Explorers", note: "Travel on your own, together", members: 830, motif: "sea", pal: "sea" },
+    { id: "trail", name: "Trail & Summit", note: "Hikes, treks and mountain huts", members: 960, motif: "mountain", pal: "snow", cat: "nature" },
+  ];
+  function pickedGroups() {
+    var cities = saved.map(function (id) { return GEMS.filter(function (g) { return g.id === id; })[0]; });
+    var score = function (g) {
+      return (g.city && cities.some(function (x) { return x.city === g.city; }) ? 3 : 0) + (g.cat && cities.some(function (x) { return x.cat === g.cat; }) ? 2 : 0);
+    };
+    return GROUPS.slice().sort(function (a, b) { return score(b) - score(a) || b.members - a.members; }).slice(0, 3);
+  }
+  function renderGroups() {
+    $("groups-sub").textContent = saved.length ? "Communities picked from what you saved." : "Popular communities to start with.";
+    $("groups").innerHTML = pickedGroups().map(function (g, i) {
+      var on = joined.indexOf(g.id) >= 0, n = g.members + (on ? 1 : 0);
+      return '<div class="group"><span class="art">' + art(g.motif, g.pal, 60 + i) + "</span><div><b>" + esc(g.name) + "</b><small>" + esc(g.note) + " · " + n.toLocaleString("en") + ' members</small></div><button type="button" class="join" data-group="' + g.id + '" aria-pressed="' + on + '" aria-label="' + (on ? "Leave " : "Join ") + esc(g.name) + '">' + (on ? "Joined ✓" : "Join") + "</button></div>";
+    }).join("");
+    var badge = $("gbadge");
+    badge.textContent = joined.length; badge.classList.toggle("show", joined.length > 0);
+    $("mini-post").innerHTML = '<div class="who">' + avatar("Chiyo", 3) + '<span><b>Chiyo</b> in Japan Travel Club<small>Recommendation · 5h</small></span></div><h6>Gio-ji moss garden before 9 AM</h6><p>A ten-minute walk from the bamboo grove and almost empty at opening. Go after rain.</p><div class="acts"><button type="button" id="mini-like" aria-pressed="' + liked + '">' + (liked ? "♥" : "♡") + " " + (liked ? 43 : 42) + "</button><span>💬 7 comments</span></div>";
+  }
+  renderGroups();
+  $("groups").addEventListener("click", function (e) {
+    var b = e.target.closest(".join"); if (!b) return;
+    var id = b.dataset.group, on = joined.indexOf(id) < 0;
+    if (on) joined.push(id); else joined = joined.filter(function (x) { return x !== id; });
+    setXp(on ? 10 : -10, b);
+    renderGroups();
+    markStep("community", joined.length > 0);
+    if (joined.length) hint("That's Orbis: discover, save, plan and connect. Join the waitlist to try the real thing.");
+    suggestInterests();
+  });
+  $("mini-post").addEventListener("click", function (e) {
+    if (!e.target.closest("#mini-like")) return;
+    liked = !liked; renderGroups();
+  });
 
   // ---------- Global Pulse: upcoming happenings with live countdowns ----------
   var DAY = 86400000;
@@ -341,6 +384,13 @@
       (function tick(now) { var p = Math.min(1, (now - start) / 1400); el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(tick); })(start);
     });
   }
+  // Community section: a community card, a post and the "becomes a hidden gem" moment.
+  $("stack").innerHTML =
+    '<article class="c-card c-group"><span class="art">' + art("temple", "moss", 70) + '</span><div class="body"><span class="tag">Place · Official</span><h3>Japan Travel Club</h3><p>Temples, trains, tiny bars and the quiet side of Japan.</p><div class="row2"><div class="faces">' +
+    ["Chiyo", "Elena", "Kenji", "Mei"].map(avatar).join("") + '<small>1,240 members</small></div><span class="join" aria-hidden="true">Join</span></div></div></article>' +
+    '<article class="c-card c-post"><div class="who">' + avatar("Marcos", 4) + '<span><b>Marcos</b> in Solo Explorers<small>Experience · 2 days ago</small></span></div><h4>Three weeks solo in Lisbon: what worked</h4><p>Coworking in Cais do Sodré was the easiest way to meet people. Thursday walking tours turned into dinners.</p><span class="place">📍 Cais do Sodré · Lisbon</span><div class="acts"><span>♥ 128</span><span>💬 24</span><span>Saved by 61</span></div></article>' +
+    '<div class="c-gem"><span>✳</span><span>A recommendation from <b>Food Trails</b> is now a hidden gem in Explore</span></div>';
+
   var BUDDIES = [
     { title: "Lisbon in May", text: "4 explorers you follow are heading there. Rooftops, fado and a day in Sintra.", people: ["Ana", "Joel", "Kai", "Rui"], motif: "city", pal: "dusk" },
     { title: "Svaneti trek, July", text: "Two hikers are looking for company on the Mestia to Ushguli trail.", people: ["Eli", "Nora"], motif: "mountain", pal: "snow" },
@@ -366,6 +416,7 @@
       want.hidden_gems = 1; if (g.cat === "food") want.food = 1; if (g.cat === "culture") want.culture = 1; if (g.cat === "nature") want.adventure = 1; if (g.cat === "views") want.photography = 1;
     });
     if (planned) want.itineraries = 1;
+    if (joined.length) want.travel_buddies = 1;
     if (pulsed) { want.events = 1; if (pulseCat === "sport") want.sports = 1; if (pulseCat === "food") want.food = 1; if (pulseCat === "culture") want.culture = 1; }
     chips.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", String(!!want[c.dataset.key])); });
   }
