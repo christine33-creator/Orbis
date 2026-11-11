@@ -142,16 +142,38 @@ const AUTH_CODES: Record<string, ErrorCode> = {
   over_request_rate_limit: "tooManyRequests",
   same_password: "samePassword",
   email_address_invalid: "invalidEmail",
+  validation_failed: "invalidEmail",
   otp_expired: "linkExpired",
   provider_disabled: "providerDisabled",
+  // The project only accepts these addresses (Supabase's built-in email sender serves team members only).
+  email_address_not_authorized: "emailNotAuthorized",
+  signup_disabled: "signupsDisabled",
+  email_provider_disabled: "signupsDisabled",
+  captcha_failed: "captchaFailed",
 };
 
-const authError = (e: { message: string; code?: string }) => {
+/** Turns a Supabase Auth error into a translatable one. Exported for tests. */
+export function authError(e: { message: string; code?: string; status?: number; name?: string }) {
+  // Logged without personal data so failures can be diagnosed from the browser console.
+  if (typeof console !== "undefined") console.warn("[auth]", e.status ?? "", e.code ?? "", e.message);
   if (e.code && AUTH_CODES[e.code]) return new ApiError(AUTH_CODES[e.code]);
   if (e.message === "Invalid login credentials") return new ApiError("badCredentials");
   if (/provider is not enabled|unsupported provider/i.test(e.message)) return new ApiError("providerDisabled");
+  // SMTP failures: Supabase does not create the account when the confirmation email can't be sent.
+  if (/error sending .*email|sending (confirmation|magic link|recovery)|smtp/i.test(e.message)) return new ApiError("emailSendFailed");
+  if (e.name === "AuthRetryableFetchError" || /failed to fetch|network|load failed/i.test(e.message) || e.status === 0) return new ApiError("network");
   return new ApiError("authFailed", { message: e.message });
-};
+}
+
+/**
+ * Supabase returns a normal-looking success for an address that already has an account (so
+ * attackers can't discover which emails are registered), but creates nothing and sends no email.
+ * A user with no identities is that case.
+ */
+export function signUpOutcome(data: { user: { identities?: unknown[] | null } | null; session: unknown | null }): "created" | "confirmNeeded" | "existing" {
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) return "existing";
+  return data.session ? "created" : "confirmNeeded";
+}
 
 export function createSupabaseApi(url: string, anonKey: string): Api {
   const sb: SupabaseClient<any, "public", any> = createClient(url, anonKey, {
@@ -182,17 +204,19 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       return () => data.subscription.unsubscribe();
     },
     async sendMagicLink(email) {
-      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } });
+      const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirectTo() } });
       if (error) throw authError(error);
     },
     async signInWithPassword(email, password) {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw authError(error);
     },
     async signUpWithPassword(email, password) {
-      const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo() } });
+      const { data, error } = await sb.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: redirectTo() } });
       if (error) throw authError(error);
-      return { needsConfirmation: !data.session };
+      const outcome = signUpOutcome(data);
+      if (outcome === "existing") throw new ApiError("emailTaken");
+      return { needsConfirmation: outcome === "confirmNeeded" };
     },
     async signInWithGoogle() {
       const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
