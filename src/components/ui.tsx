@@ -53,7 +53,14 @@ export const GEM_CATEGORY_META: Record<GemCategory, { icon: LucideIcon; scene: S
   other: { icon: MapPin, scene: "mountain" },
 };
 
-export function Avatar({ name, hue, size = 40, ring, className }: { name: string; hue: number; size?: number; ring?: boolean; className?: string }) {
+export function Avatar({ name, hue, size = 40, ring, className, src }: { name: string; hue: number; size?: number; ring?: boolean; className?: string; src?: string | null }) {
+  if (src) {
+    return (
+      <img src={src} alt="" aria-hidden width={size} height={size} loading="lazy"
+        className={cx("shrink-0 rounded-full bg-chip object-cover", ring && "ring-[3px] ring-white shadow-md", className)}
+        style={{ width: size, height: size }} />
+    );
+  }
   const initials = name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
   return (
     <div

@@ -1,6 +1,7 @@
 import { useUi, type Overlay } from "../store/ui";
 import { DestinationSheet, EventSheet, GemSheet, ProfileSheet } from "./sheets/Detail";
 import { AddStopSheet, AddTipSheet, AddToTripSheet, EditProfileSheet, NewTripSheet, ReportSheet, ShareGemSheet } from "./sheets/Forms";
+import { CommunityFormSheet, CommunitySheet, MembersSheet, PeopleSheet, PostFormSheet, PostSheet } from "./sheets/Community";
 import { AuthSheet, ChangeEmailSheet, GuidelinesSheet, ModerationSheet, PasswordSheet, SettingsSheet, UpdatesSheet, XpLogSheet } from "./sheets/Account";
 
 export function Overlays() {
@@ -19,7 +20,13 @@ function OverlayView({ o, onClose }: { o: Overlay; onClose: () => void }) {
     case "gem": return <GemSheet id={o.id} onClose={onClose} />;
     case "event": return <EventSheet id={o.id} onClose={onClose} />;
     case "profile": return <ProfileSheet id={o.id} onClose={onClose} />;
-    case "shareGem": return <ShareGemSheet destinationId={o.destinationId} onClose={onClose} />;
+    case "shareGem": return <ShareGemSheet destinationId={o.destinationId} fromPost={o.fromPost} onClose={onClose} />;
+    case "community": return <CommunitySheet id={o.id} onClose={onClose} />;
+    case "post": return <PostSheet id={o.id} onClose={onClose} />;
+    case "postForm": return <PostFormSheet communityId={o.communityId} postId={o.postId} onClose={onClose} />;
+    case "communityForm": return <CommunityFormSheet id={o.id} onClose={onClose} />;
+    case "members": return <MembersSheet communityId={o.communityId} onClose={onClose} />;
+    case "people": return <PeopleSheet userId={o.userId} which={o.which} onClose={onClose} />;
     case "newTrip": return <NewTripSheet destinationId={o.destinationId} items={o.items} onClose={onClose} />;
     case "addToTrip": return <AddToTripSheet o={o} onClose={onClose} />;
     case "report": return <ReportSheet o={o} onClose={onClose} />;

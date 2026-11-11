@@ -54,6 +54,8 @@ export interface AuthorRef {
   handle: string;
   name: string;
   hue: number;
+  /** Public URL of the profile photo, if any. */
+  avatarUrl: string | null;
 }
 
 export interface Gem {
@@ -76,9 +78,13 @@ export interface Gem {
   saves: number;
   reports: number;
   createdAt: string;
+  /** The community recommendation this gem was suggested from, if any. */
+  sourcePostId?: string | null;
 }
 
 export interface NewGem {
+  /** Set when the gem is suggested from a community recommendation (always reviewed first). */
+  sourcePostId?: string | null;
   destinationId: string | null;
   name: string;
   description: string;
@@ -153,6 +159,7 @@ export interface Profile {
   onboarded: boolean;
   role: Role;
   xp: number;
+  avatarUrl: string | null;
   createdAt: string;
 }
 
@@ -193,7 +200,7 @@ export interface TripItem {
 
 export type NewTripItem = Omit<TripItem, "id" | "done" | "position"> & { position?: number };
 
-export type ReportTarget = "gem" | "tip" | "profile" | "event";
+export type ReportTarget = "gem" | "tip" | "profile" | "event" | "community" | "post" | "comment";
 export type ReportReason = "spam" | "inappropriate" | "unsafe" | "inaccurate" | "harassment" | "other";
 
 export interface Report {
@@ -218,4 +225,107 @@ export interface XpEvent {
 export interface AuthUser {
   id: string;
   email: string | null;
+}
+
+/* ---------------------------------------------------------------- Community */
+
+export type CommunityCategory = "place" | "interest" | "people";
+export type CommunityRole = "member" | "moderator" | "owner";
+export type PostKind = "discussion" | "question" | "recommendation" | "experience";
+
+export interface Community {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  category: CommunityCategory;
+  destinationId: string | null;
+  country: string;
+  styles: TravelStyle[];
+  hue: number;
+  official: boolean;
+  createdBy: string | null;
+  status: ContentStatus;
+  memberCount: number;
+  postCount: number;
+  createdAt: string;
+}
+
+export type NewCommunity = Pick<Community, "name" | "description" | "category" | "destinationId" | "country" | "styles" | "hue">;
+
+export interface CommunityRef {
+  id: string;
+  name: string;
+  hue: number;
+}
+
+export interface Membership {
+  communityId: string;
+  role: CommunityRole;
+  joinedAt: string;
+}
+
+export interface Member extends AuthorRef {
+  role: CommunityRole;
+}
+
+export interface Post {
+  id: string;
+  communityId: string;
+  community: CommunityRef | null;
+  authorId: string;
+  /** Null when the author's profile is private or deleted. */
+  author: AuthorRef | null;
+  kind: PostKind;
+  title: string;
+  body: string;
+  destinationId: string | null;
+  place: string;
+  photos: string[];
+  status: ContentStatus;
+  likes: number;
+  comments: number;
+  saves: number;
+  reports: number;
+  createdAt: string;
+  editedAt: string | null;
+}
+
+export interface NewPost {
+  communityId: string;
+  kind: PostKind;
+  title: string;
+  body: string;
+  destinationId: string | null;
+  place: string;
+}
+
+export type PostPatch = Partial<Omit<NewPost, "communityId">>;
+
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  author: AuthorRef | null;
+  body: string;
+  status: ContentStatus;
+  createdAt: string;
+  editedAt: string | null;
+}
+
+export interface ProfileStats {
+  followers: number;
+  following: number;
+  gems: number;
+  posts: number;
+  communities: number;
+}
+
+export interface PostFilter {
+  communityId?: string;
+  communityIds?: string[];
+  authorId?: string;
+  ids?: string[];
+  destinationId?: string;
+  limit?: number;
 }

@@ -94,3 +94,16 @@ export function fmtEventDate(startIso: string, endIso: string | null) {
   if (!b || b.getTime() - a.getTime() < 86400000) return f.format(a);
   return f.formatRange(a, b);
 }
+
+/** "3 hours ago" in the current UI language. */
+export function relTime(iso: string) {
+  const s = (new Date(iso).getTime() - Date.now()) / 1000;
+  const rtf = new Intl.RelativeTimeFormat(lang(), { numeric: "auto" });
+  const a = Math.abs(s);
+  if (a < 60) return rtf.format(Math.round(s), "second");
+  if (a < 3600) return rtf.format(Math.round(s / 60), "minute");
+  if (a < 86400) return rtf.format(Math.round(s / 3600), "hour");
+  if (a < 86400 * 30) return rtf.format(Math.round(s / 86400), "day");
+  if (a < 86400 * 365) return rtf.format(Math.round(s / (86400 * 30)), "month");
+  return rtf.format(Math.round(s / (86400 * 365)), "year");
+}

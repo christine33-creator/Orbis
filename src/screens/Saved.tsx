@@ -1,5 +1,6 @@
-import { Bookmark, CalendarPlus, Compass, Gem as GemIcon, MapPin, Ticket, Route } from "lucide-react";
-import { useDestinations, useEvents, useGems, useSaves } from "../api/hooks";
+import { Bookmark, CalendarPlus, Compass, Gem as GemIcon, MapPin, MessagesSquare, Ticket, Route } from "lucide-react";
+import { useDestinations, useEvents, useGems, usePosts, useSavedPosts, useSaves } from "../api/hooks";
+import { PostCard } from "../components/CommunityCards";
 import { useUi, type TripSeedItem } from "../store/ui";
 import { Button, Card } from "../components/ui";
 import { GemImage, SaveButton } from "../components/Cards";
@@ -29,6 +30,9 @@ export function Saved() {
   const open = useUi((s) => s.open);
   const setTab = useUi((s) => s.setTab);
   const { t } = useTranslation();
+  const { data: savedPostIds = [] } = useSavedPosts();
+  const { data: savedPostRows = [] } = usePosts({ ids: savedPostIds, limit: 200 }, savedPostIds.length > 0);
+  const savedPosts = savedPostIds.map((id) => savedPostRows.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p);
 
   if (!user) return <SignInPrompt icon={Bookmark} title={t("saved.promptTitle")} body={t("saved.promptBody")} />;
 
@@ -62,7 +66,7 @@ export function Saved() {
       </div>
 
       {isLoading && <div className="h-40 animate-pulse rounded-3xl bg-card" />}
-      {!isLoading && saves.length === 0 && (
+      {!isLoading && saves.length === 0 && savedPosts.length === 0 && (
         <Card className="p-6 text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-accent-soft text-accent"><Bookmark size={28} /></div>
           <h2 className="font-display mt-4 text-[22px] font-semibold">{t("saved.emptyTitle")}</h2>
@@ -118,6 +122,17 @@ export function Saved() {
           </section>
         );
       })}
+
+      {savedPosts.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-1.5">
+            <MessagesSquare size={16} className="shrink-0 text-accent" />
+            <h2 className="text-[18px] font-bold">{t("community.savedPosts")}</h2>
+            <span className="ml-auto text-[12px] font-semibold text-muted">{t("saved.countSaved", { count: savedPosts.length })}</span>
+          </div>
+          {savedPosts.map((p) => <PostCard key={p.id} post={p} />)}
+        </section>
+      )}
     </div>
   );
 }

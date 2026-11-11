@@ -1,7 +1,8 @@
 import type { en } from "../i18n/locales/en";
 import type {
-  AuthUser, ContentStatus, Destination, Gem, ItemType, NewGem, NewTripItem, Profile, ProfilePatch, PulseEvent,
-  Report, ReportReason, ReportTarget, Save, Tip, Trip, TripItem, XpEvent,
+  AuthUser, AuthorRef, Comment, Community, ContentStatus, Destination, Gem, ItemType, Member, Membership, NewCommunity, NewGem,
+  NewPost, NewTripItem, Post, PostFilter, PostPatch, Profile, ProfilePatch, ProfileStats, PulseEvent, Report, ReportReason,
+  ReportTarget, Save, Tip, Trip, TripItem, XpEvent,
 } from "../types";
 
 export interface NewTrip {
@@ -15,8 +16,13 @@ export interface NewTrip {
 export interface ModerationQueue {
   gems: Gem[];
   tips: Tip[];
+  posts: Post[];
+  comments: Comment[];
+  communities: Community[];
   reports: Report[];
 }
+
+export type ModerationTarget = "gem" | "tip" | "post" | "comment" | "community";
 
 /** Everything the UI needs from a backend. Implemented by Supabase and by a local demo store. */
 export interface Api {
@@ -48,6 +54,12 @@ export interface Api {
   handleAvailable(handle: string): Promise<boolean>;
   getProfile(id: string): Promise<Profile | null>;
   followCounts(userId: string): Promise<{ followers: number; following: number }>;
+  /** Public numbers for a profile; null when the profile is private (to the caller). */
+  profileStats(userId: string): Promise<ProfileStats | null>;
+  /** Uploads a new profile photo (already resized and stripped of metadata) and sets it. */
+  setAvatar(photo: Blob | null): Promise<Profile>;
+  listFollowers(userId: string): Promise<AuthorRef[]>;
+  listFollowees(userId: string): Promise<AuthorRef[]>;
 
   // Discovery
   listDestinations(): Promise<Destination[]>;
@@ -86,12 +98,44 @@ export interface Api {
   setBlock(userId: string, on: boolean): Promise<void>;
   report(targetType: ReportTarget, targetId: string, reason: ReportReason, details: string): Promise<void>;
 
+  // Communities
+  listCommunities(): Promise<Community[]>;
+  getCommunity(id: string): Promise<Community | null>;
+  createCommunity(c: NewCommunity): Promise<Community>;
+  updateCommunity(id: string, patch: Partial<NewCommunity>): Promise<void>;
+  deleteCommunity(id: string): Promise<void>;
+  myMemberships(): Promise<Membership[]>;
+  setMembership(communityId: string, on: boolean): Promise<void>;
+  listMembers(communityId: string): Promise<Member[]>;
+  /** Owners only (the server enforces it). */
+  setMemberRole(communityId: string, userId: string, role: "member" | "moderator"): Promise<void>;
+  removeMember(communityId: string, userId: string): Promise<void>;
+  /** Communities a person belongs to (respects their privacy). */
+  communitiesOf(userId: string): Promise<Community[]>;
+
+  // Posts
+  listPosts(filter: PostFilter): Promise<Post[]>;
+  getPost(id: string): Promise<Post | null>;
+  createPost(post: NewPost, photos: Blob[]): Promise<Post>;
+  updatePost(id: string, patch: PostPatch): Promise<void>;
+  deletePost(id: string): Promise<void>;
+  myLikes(): Promise<string[]>;
+  setLike(postId: string, on: boolean): Promise<void>;
+  mySavedPosts(): Promise<string[]>;
+  setPostSaved(postId: string, on: boolean): Promise<void>;
+  listComments(postId: string): Promise<Comment[]>;
+  createComment(postId: string, body: string): Promise<Comment>;
+  updateComment(id: string, body: string): Promise<void>;
+  deleteComment(id: string): Promise<void>;
+  /** The gem suggested from this post, if the caller can see it (published, or their own). */
+  gemFromPost(postId: string): Promise<Gem | null>;
+
   // Engagement
   xpHistory(): Promise<XpEvent[]>;
 
   // Moderation (moderators only; the server enforces it)
   moderationQueue(): Promise<ModerationQueue>;
-  moderate(targetType: "gem" | "tip", id: string, status: ContentStatus, note: string): Promise<void>;
+  moderate(targetType: ModerationTarget, id: string, status: ContentStatus, note: string): Promise<void>;
   resolveReport(id: string, status: "resolved" | "dismissed"): Promise<void>;
 }
 

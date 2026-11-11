@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Check, CirclePlus, Flag, Gem as GemIcon, ImagePlus, LocateFixed, Plus, Route, Sparkles, X } from "lucide-react";
 import {
-  useAddToTrip, useCreateGem, useCreateTip, useCreateTrip, useDestinations, useMe, useReport,
+  useAddToTrip, useCreateGem, useCreateTip, useCreateTrip, useDestinations, useMe, useReport, useSetAvatar,
   useToggleBlock, useTripItemMutations, useTrips, useUpdateProfile,
 } from "../../api/hooks";
 import { api } from "../../api";
@@ -20,16 +20,16 @@ const MapView = lazy(() => import("../../components/MapView"));
 
 /* ------------------------------------------------------------------ Share a gem */
 
-export function ShareGemSheet({ destinationId, onClose }: { destinationId?: string; onClose: () => void }) {
+export function ShareGemSheet({ destinationId, fromPost, onClose }: { destinationId?: string; fromPost?: { id: string; name: string; description: string }; onClose: () => void }) {
   const { t } = useTranslation();
   const { data: destinations = [] } = useDestinations();
   const create = useCreateGem();
   const toast = useUi((s) => s.toast);
   const open = useUi((s) => s.open);
   const startDest = destinations.find((d) => d.id === destinationId);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(fromPost?.name.slice(0, 80) ?? "");
   const [category, setCategory] = useState<GemCategory>("viewpoint");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(fromPost?.description.slice(0, 1000) ?? "");
   const [tip, setTip] = useState("");
   const [styles, setStyles] = useState<TravelStyle[]>([]);
   const [point, setPoint] = useState<{ lat: number; lng: number } | null>(null);
@@ -64,14 +64,14 @@ export function ShareGemSheet({ destinationId, onClose }: { destinationId?: stri
       {
         gem: {
           destinationId: near?.id ?? null, name: name.trim(), description: description.trim(), tip: tip.trim(), category, styles,
-          lat: point.lat, lng: point.lng, country: country ?? near?.country ?? "",
+          lat: point.lat, lng: point.lng, country: country ?? near?.country ?? "", sourcePostId: fromPost?.id ?? null,
         },
         photos: photos.map((p) => p.blob),
       },
       {
         onSuccess: (gem) => {
           onClose();
-          if (gem.status === "pending") toast({ text: t("forms.sentForReview"), sub: t("forms.sentForReviewSub"), tone: "info" });
+          if (gem.status === "pending") toast({ text: t("forms.sentForReview"), sub: fromPost ? t("community.suggestedSub") : t("forms.sentForReviewSub"), tone: "info" });
           open({ type: "gem", id: gem.id });
         },
       },
@@ -79,9 +79,10 @@ export function ShareGemSheet({ destinationId, onClose }: { destinationId?: stri
   };
 
   return (
-    <Sheet full title={t("forms.shareTitle")} onClose={onClose}
+    <Sheet full title={fromPost ? t("community.suggestTitle") : t("forms.shareTitle")} onClose={onClose}
       footer={<Button className="w-full" icon={GemIcon} disabled={!valid || create.isPending} onClick={submit}>{create.isPending ? t("forms.sharing") : t("forms.shareCta")}</Button>}>
       <div className="space-y-5">
+        {fromPost && <p className="rounded-2xl bg-mint p-3 text-[13px] font-semibold text-green">{t("community.suggestReviewNote")}</p>}
         <Field label={t("forms.placeName")}>
           <input className={inputCls} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder={t("forms.placeHolderName")} />
         </Field>
@@ -152,7 +153,7 @@ export function ShareGemSheet({ destinationId, onClose }: { destinationId?: stri
 
 /* ------------------------------------------------------------------ Trips */
 
-function DestinationSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function DestinationSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { t } = useTranslation();
   const { data: destinations = [] } = useDestinations();
   const { data: me } = useMe();
@@ -394,6 +395,8 @@ export function EditProfileSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const { data: me } = useMe();
   const save = useUpdateProfile();
+  const avatar = useSetAvatar();
+  const [photoError, setPhotoError] = useState("");
   const [draft, setDraft] = useState<Profile | null>(me ?? null);
   const [handleOk, setHandleOk] = useState(true);
   useEffect(() => setDraft((d) => d ?? me ?? null), [me]);
@@ -418,13 +421,38 @@ export function EditProfileSheet({ onClose }: { onClose: () => void }) {
       </Button>}>
       <div className="space-y-5">
         <div className="flex items-center gap-4">
-          <Avatar name={draft.name || draft.handle} hue={draft.hue} size={64} />
+          <Avatar name={draft.name || draft.handle} hue={draft.hue} src={me?.avatarUrl} size={72} />
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <label className={cx("inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-chip px-3.5 py-2 text-[13px] font-bold", avatar.isPending && "opacity-50")}>
+                <ImagePlus size={15} /> {avatar.isPending ? t("common.pleaseWait") : me?.avatarUrl ? t("community.changePhoto") : t("community.addPhoto")}
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={avatar.isPending}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f) return;
+                    setPhotoError("");
+                    try {
+                      avatar.mutate(await preparePhoto(f, 512, 0.85));
+                    } catch (err) {
+                      setPhotoError(errorText(t, err));
+                    }
+                  }} />
+              </label>
+              {me?.avatarUrl && !avatar.isPending && (
+                <button type="button" onClick={() => avatar.mutate(null)} className="rounded-full px-3 py-2 text-[13px] font-bold text-muted hover:text-accent">{t("community.removePhoto")}</button>
+              )}
+            </div>
+            {photoError ? <p className="text-[12px] font-semibold text-accent">{photoError}</p> : <p className="text-[11.5px] text-faint">{t("community.photoPrivacy")}</p>}
+          </div>
+        </div>
+        {!me?.avatarUrl && (
           <div className="flex gap-2">
             {[10, 40, 150, 200, 260, 320].map((h) => (
               <button key={h} aria-label={`Colour ${h}`} onClick={() => set({ hue: h })} className={cx("h-7 w-7 rounded-full", draft.hue === h && "ring-2 ring-ink ring-offset-2")} style={{ background: `hsl(${h} 60% 50%)` }} />
             ))}
           </div>
-        </div>
+        )}
         <Field label={t("onboarding.name")}><input className={inputCls} maxLength={80} value={draft.name} onChange={(e) => set({ name: e.target.value })} /></Field>
         <Field label={t("onboarding.handle")} hint={handleOk ? undefined : t("forms.handleBad")}>
           <input className={inputCls} maxLength={30} value={draft.handle} onChange={(e) => set({ handle: e.target.value.replace(/[^a-z0-9_.]/gi, "").toLowerCase() })} />

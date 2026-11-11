@@ -4,6 +4,7 @@ import { writeFileSync } from "node:fs";
 import { DESTINATIONS } from "../src/data/destinations.ts";
 import { GEM_SEEDS } from "../src/data/gems.ts";
 import { EVENT_SEEDS } from "../src/data/events.ts";
+import { COMMUNITY_SEEDS } from "../src/data/communities.ts";
 
 /** Fixed id for the editorial "Orbis Team" account that owns starter gems. */
 export const TEAM_ID = "00000000-0000-4000-8000-000000000001";
@@ -48,7 +49,17 @@ for (const e of EVENT_SEEDS) {
       `) on conflict (source, external_id) do nothing;`,
   );
 }
+out.push("");
+
+// Official starter communities: empty, with no members or posts.
+for (const c of COMMUNITY_SEEDS) {
+  out.push(
+    `insert into public.communities (slug, name, description, category, destination_id, country, styles, hue, official) values (` +
+      [q(c.slug), q(c.name), q(c.description), q(c.category), c.destinationId ? q(c.destinationId) : "null", q(c.country), arr(c.styles), c.hue, "true"].join(", ") +
+      `) on conflict (slug) do nothing;`,
+  );
+}
 out.push("", "commit;", "");
 
 writeFileSync(new URL("../supabase/seed.sql", import.meta.url), out.join("\n"));
-console.log(`seed.sql: ${DESTINATIONS.length} destinations, ${GEM_SEEDS.length} gems, ${EVENT_SEEDS.length} sample events`);
+console.log(`seed.sql: ${DESTINATIONS.length} destinations, ${GEM_SEEDS.length} gems, ${EVENT_SEEDS.length} sample events, ${COMMUNITY_SEEDS.length} communities`);

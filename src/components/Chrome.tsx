@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { AlertCircle, Bell, Bookmark, Compass, ListChecks, Sparkles, Stamp, Map as MapIcon, Rows3 } from "lucide-react";
+import { AlertCircle, Bell, Bookmark, Compass, ListChecks, Sparkles, Stamp, Map as MapIcon, Rows3, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useUi, type Tab } from "../store/ui";
 import { useEvents, useMe, useSaves } from "../api/hooks";
@@ -60,7 +60,7 @@ export function TopBar() {
       )}
       {user && me ? (
         <button onClick={() => setTab("passport")} aria-label={t("top.passport")} className="ml-1">
-          <Avatar name={me.name || me.handle} hue={me.hue} size={36} />
+          <Avatar name={me.name || me.handle} hue={me.hue} src={me.avatarUrl} size={36} />
         </button>
       ) : user === null ? (
         <button onClick={() => open({ type: "auth" })} className="ml-1 rounded-full bg-accent px-4 py-2 text-[13px] font-bold text-white">
@@ -73,6 +73,7 @@ export function TopBar() {
 
 const TABS: { id: Tab; icon: typeof Compass }[] = [
   { id: "explore", icon: Compass },
+  { id: "community", icon: Users },
   { id: "saved", icon: Bookmark },
   { id: "trips", icon: ListChecks },
   { id: "passport", icon: Stamp },
@@ -84,8 +85,8 @@ export function BottomNav() {
   const { data: saves = [] } = useSaves();
   const { t } = useTranslation();
   return (
-    <nav className="absolute inset-x-0 bottom-0 z-30 px-4 pb-4">
-      <div className="flex rounded-[28px] bg-card px-2 py-2 shadow-[0_8px_30px_rgba(20,20,30,0.12)]">
+    <nav className="absolute inset-x-0 bottom-0 z-30 px-3 pb-4 min-[400px]:px-4">
+      <div className="flex rounded-[28px] bg-card px-1 py-2 shadow-[0_8px_30px_rgba(20,20,30,0.12)]">
         {TABS.map(({ id, icon: Icon }) => {
           const label = t(`nav.${id}`);
           return (
@@ -94,10 +95,10 @@ export function BottomNav() {
             onClick={() => setTab(id)}
             aria-current={tab === id ? "page" : undefined}
             aria-label={id === "saved" && saves.length ? t("nav.savedCount", { count: saves.length }) : label}
-            className={cx("relative flex flex-1 flex-col items-center gap-1 rounded-2xl py-1.5 transition", tab === id ? "text-accent" : "text-ink/80 hover:text-ink")}
+            className={cx("relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl py-1.5 transition", tab === id ? "text-accent" : "text-ink/80 hover:text-ink")}
           >
             <Icon size={21} strokeWidth={tab === id ? 2.4 : 1.9} />
-            <span className="text-[10.5px] font-bold tracking-wider uppercase">{label}</span>
+            <span className="max-w-full truncate text-[10px] leading-tight font-bold tracking-tight min-[400px]:text-[10.5px]">{label}</span>
             {id === "saved" && saves.length > 0 && (
               <span aria-hidden className="absolute top-0 right-[22%] min-w-4 rounded-full bg-accent px-1 text-[10px] leading-4 font-bold text-white">{saves.length}</span>
             )}

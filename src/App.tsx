@@ -7,6 +7,7 @@ import { BottomNav, Toasts, TopBar } from "./components/Chrome";
 import { Onboarding } from "./screens/Onboarding";
 import { Explore } from "./screens/Explore";
 import { Saved } from "./screens/Saved";
+import { Community } from "./screens/Community";
 import { Trips } from "./screens/Trips";
 import { Passport } from "./screens/Passport";
 import { Overlays } from "./screens/Overlays";
@@ -106,6 +107,7 @@ function ConfiguredShell() {
           <TopBar />
           <main className="px-5">
             {tab === "explore" && <Explore />}
+            {tab === "community" && <Community />}
             {tab === "saved" && <Saved />}
             {tab === "trips" && <Trips />}
             {tab === "passport" && <Passport />}

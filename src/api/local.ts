@@ -1,13 +1,15 @@
 import type { Api, ModerationQueue, NewTrip } from "./types";
 import { ApiError } from "./types";
 import type {
-  AuthUser, ContentStatus, Gem, ItemType, Profile, PulseEvent, Report, Tip, Trip, TripItem, XpEvent,
+  AuthUser, AuthorRef, Comment, Community, CommunityRole, ContentStatus, Gem, ItemType, Member, NewCommunity, Post, Profile,
+  PulseEvent, Report, Tip, Trip, TripItem, XpEvent,
 } from "../types";
 import { DESTINATIONS } from "../data/destinations";
 import { GEM_SEEDS } from "../data/gems";
 import { EVENT_SEEDS } from "../data/events";
-import { DEMO_PEOPLE, DEMO_TIPS } from "../data/demo";
-import { DAILY_LIMITS, HANDLE_RE, REPORT_HIDE_THRESHOLD, XP_AWARDS, needsReview, type XpReason } from "../lib/rules";
+import { DEMO_PEOPLE, DEMO_POSTS, DEMO_TIPS } from "../data/demo";
+import { COMMUNITY_SEEDS } from "../data/communities";
+import { DAILY_LIMITS, HANDLE_RE, REPORT_HIDE_THRESHOLD, XP_AWARDS, XP_DAILY_CAPS, needsReview, slugify, type XpReason } from "../lib/rules";
 
 /**
  * Browser-only backend for demos and development. Data lives in localStorage on this
@@ -36,6 +38,12 @@ interface Db {
   blocks: { blockerId: string; blockedId: string }[];
   reports: Report[];
   xp: Owned<XpEvent>[];
+  communities: Community[];
+  members: { communityId: string; userId: string; role: CommunityRole; joinedAt: string }[];
+  posts: Post[];
+  comments: Comment[];
+  likes: { postId: string; userId: string; createdAt: string }[];
+  postSaves: { postId: string; userId: string; createdAt: string }[];
 }
 
 const now = () => new Date().toISOString();
@@ -46,14 +54,44 @@ function baseProfile(p: Partial<Profile> & Pick<Profile, "id" | "handle">): Prof
   return {
     name: "", home: "", bio: "", hue: 20, styles: [], visited: [], watching: [], socials: {},
     preferences: { pace: "balanced", budget: "comfort", company: "solo" }, visibility: "public",
-    onboarded: true, role: "member", xp: 0, createdAt: now(), ...p,
+    onboarded: true, role: "member", xp: 0, avatarUrl: null, createdAt: now(), ...p,
   };
+}
+
+/** Official starter communities, plus (demo only) a few fictional members and posts. */
+function seedCommunities(db: Db) {
+  const ago = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
+  db.communities = COMMUNITY_SEEDS.map((c) => ({
+    id: `community-${c.slug}`, slug: c.slug, name: c.name, description: c.description, category: c.category, destinationId: c.destinationId,
+    country: c.country, styles: c.styles, hue: c.hue, official: true, createdBy: null, status: "published", memberCount: 0, postCount: 0, createdAt: ago(24 * 90),
+  }));
+  db.members = []; db.posts = []; db.comments = []; db.likes = []; db.postSaves = [];
+  for (const p of DEMO_POSTS) {
+    const cid = `community-${p.community}`;
+    for (const uid of [p.authorId, ...p.likedBy]) {
+      if (!db.members.some((m) => m.communityId === cid && m.userId === uid)) db.members.push({ communityId: cid, userId: uid, role: "member", joinedAt: ago(24 * 30) });
+    }
+    db.posts.push({
+      id: `post-${p.key}`, communityId: cid, community: null, authorId: p.authorId, author: null, kind: p.kind, title: p.title, body: p.body,
+      destinationId: p.destinationId, place: p.place, photos: [], status: "published", likes: p.likedBy.length, comments: p.comments.length,
+      saves: 0, reports: 0, createdAt: ago(p.hoursAgo), editedAt: null,
+    });
+    p.likedBy.forEach((uid) => db.likes.push({ postId: `post-${p.key}`, userId: uid, createdAt: ago(p.hoursAgo - 1) }));
+    p.comments.forEach((c, i) => {
+      if (!db.members.some((m) => m.communityId === cid && m.userId === c.authorId)) db.members.push({ communityId: cid, userId: c.authorId, role: "member", joinedAt: ago(24 * 30) });
+      db.comments.push({ id: `comment-${p.key}-${i}`, postId: `post-${p.key}`, authorId: c.authorId, author: null, body: c.body, status: "published", createdAt: ago(p.hoursAgo - 2 - i), editedAt: null });
+    });
+  }
+  for (const c of db.communities) {
+    c.memberCount = db.members.filter((m) => m.communityId === c.id).length;
+    c.postCount = db.posts.filter((p) => p.communityId === c.id).length;
+  }
 }
 
 function seed(): Db {
   const team = baseProfile({ id: TEAM_ID, handle: "orbis_team", name: "Orbis Team", hue: 12, bio: "Starter picks from the Orbis editors." });
   const people = DEMO_PEOPLE.map((p) => baseProfile({ ...p, xp: 400 + p.name.length * 90 }));
-  const authorRef = (p: Profile) => ({ id: p.id, handle: p.handle, name: p.name, hue: p.hue });
+  const authorRef = (p: Profile) => ({ id: p.id, handle: p.handle, name: p.name, hue: p.hue, avatarUrl: null });
   const gems: Gem[] = GEM_SEEDS.map((g, i) => ({
     id: `gem-${g.key}`, authorId: TEAM_ID, author: authorRef(team), destinationId: g.destinationId, name: g.name,
     description: g.description, tip: g.tip, category: g.category, styles: g.styles, lat: g.lat, lng: g.lng,
@@ -76,10 +114,13 @@ function seed(): Db {
       body: t.body, status: "published", votes: t.votes, createdAt: now(),
     };
   });
-  return {
+  const db: Db = {
     version: 1, currentUserId: null, users: [], profiles: [team, ...people], gems, upvotes: [], tips, tipVotes: [],
     events, saves: [], trips: [], items: [], follows: [], blocks: [], reports: [], xp: [],
+    communities: [], members: [], posts: [], comments: [], likes: [], postSaves: [],
   };
+  seedCommunities(db);
+  return db;
 }
 
 function load(): Db {
@@ -87,7 +128,12 @@ function load(): Db {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const db = JSON.parse(raw) as Db;
-      if (db.version === 1) return db;
+      if (db.version === 1) {
+        // Demo data saved before Community existed.
+        if (!db.communities) seedCommunities(db);
+        db.profiles.forEach((p) => (p.avatarUrl ??= null));
+        return db;
+      }
     }
   } catch {
     /* storage unavailable or corrupt: start fresh */
@@ -119,10 +165,14 @@ export function createLocalApi(): Api {
     return p?.role === "moderator" || p?.role === "admin";
   };
   const blockedByMe = (author: string) => db.blocks.some((b) => b.blockerId === db.currentUserId && b.blockedId === author);
-  const authorRef = (uid: string) => {
+  const canView = (uid: string) => {
+    const p = profile(uid);
+    return !!p && (p.visibility === "public" || uid === db.currentUserId || isMod());
+  };
+  const authorRef = (uid: string): AuthorRef | null => {
     const p = profile(uid);
     if (!p || (p.visibility === "private" && uid !== db.currentUserId)) return null;
-    return { id: p.id, handle: p.handle, name: p.name, hue: p.hue };
+    return { id: p.id, handle: p.handle, name: p.name, hue: p.hue, avatarUrl: p.avatarUrl };
   };
   const countToday = <T extends { createdAt: string }>(rows: T[], owned: (r: T) => boolean) =>
     rows.filter((r) => owned(r) && new Date(r.createdAt).getTime() > dayAgo()).length;
@@ -130,6 +180,8 @@ export function createLocalApi(): Api {
   function award(uid: string, reason: XpReason, ref = "") {
     if (db.xp.some((x) => x.userId === uid && x.reason === reason && x.ref === ref)) return;
     const amount = XP_AWARDS[reason];
+    const cap = XP_DAILY_CAPS[reason];
+    if (cap !== undefined && db.xp.filter((x) => x.userId === uid && x.reason === reason && new Date(x.createdAt).getTime() > dayAgo()).reduce((n, x) => n + x.amount, 0) + amount > cap) return;
     db.xp.unshift({ id: id(), userId: uid, amount, reason, ref, createdAt: now() });
     const p = profile(uid);
     if (p) p.xp += amount;
@@ -139,6 +191,43 @@ export function createLocalApi(): Api {
     return (g.status === "published" && !blockedByMe(g.authorId)) || g.authorId === db.currentUserId || isMod();
   }
   const withAuthor = <T extends { authorId: string }>(row: T) => ({ ...row, author: authorRef(row.authorId) });
+
+  // Community rules (mirror the database policies) ----------------------------------------
+  const roleIn = (cid: string, uid = db.currentUserId) => db.members.find((m) => m.communityId === cid && m.userId === uid)?.role;
+  const isCommunityMod = (cid: string) => roleIn(cid) === "owner" || roleIn(cid) === "moderator";
+  const community = (cid: string) => db.communities.find((c) => c.id === cid);
+  const visibleCommunity = (c: Community) => c.status === "published" || c.createdBy === db.currentUserId || isMod() || isCommunityMod(c.id);
+  const visiblePost = (p: Post) => {
+    const c = community(p.communityId);
+    return (p.status === "published" && !blockedByMe(p.authorId) && c?.status === "published") || p.authorId === db.currentUserId || isMod() || isCommunityMod(p.communityId);
+  };
+  const postOut = (p: Post): Post => {
+    const c = community(p.communityId);
+    return { ...p, author: authorRef(p.authorId), community: c ? { id: c.id, name: c.name, hue: c.hue } : null };
+  };
+  const visibleComment = (c: Comment) => {
+    const post = db.posts.find((p) => p.id === c.postId);
+    if (!post) return false;
+    return (c.status === "published" && !blockedByMe(c.authorId) && post.status === "published") || c.authorId === db.currentUserId || isMod() || isCommunityMod(post.communityId);
+  };
+  const recount = (cid: string) => {
+    const c = community(cid);
+    if (!c) return;
+    c.memberCount = db.members.filter((m) => m.communityId === cid).length;
+    c.postCount = db.posts.filter((p) => p.communityId === cid && p.status === "published").length;
+  };
+  const setPostStatus = (p: Post, status: ContentStatus) => {
+    const was = p.status;
+    p.status = status;
+    if (status === "published" && was !== "published") award(p.authorId, "post_published", p.id);
+    recount(p.communityId);
+  };
+  const setCommentStatus = (c: Comment, status: ContentStatus) => {
+    const post = db.posts.find((p) => p.id === c.postId);
+    const was = c.status;
+    c.status = status;
+    if (post) post.comments = Math.max(0, post.comments + (status === "published" && was !== "published" ? 1 : was === "published" && status !== "published" ? -1 : 0));
+  };
 
   const setUser = (u: AuthUser | null) => {
     db.currentUserId = u?.id ?? null;
@@ -309,6 +398,16 @@ export function createLocalApi(): Api {
       db.blocks = db.blocks.filter((b) => b.blockerId !== uid && b.blockedId !== uid);
       db.upvotes = db.upvotes.filter((u) => u.userId !== uid);
       db.xp = db.xp.filter((x) => x.userId !== uid);
+      const owned = new Set(db.members.filter((m) => m.userId === uid && m.role === "owner").map((m) => m.communityId));
+      db.communities = db.communities.filter((c) => !owned.has(c.id));
+      db.communities.forEach((c) => c.createdBy === uid && (c.createdBy = null));
+      db.members = db.members.filter((m) => m.userId !== uid && !owned.has(m.communityId));
+      const gonePosts = new Set(db.posts.filter((p) => p.authorId === uid || owned.has(p.communityId)).map((p) => p.id));
+      db.posts = db.posts.filter((p) => !gonePosts.has(p.id));
+      db.comments = db.comments.filter((c) => c.authorId !== uid && !gonePosts.has(c.postId));
+      db.likes = db.likes.filter((l) => l.userId !== uid && !gonePosts.has(l.postId));
+      db.postSaves = db.postSaves.filter((l) => l.userId !== uid && !gonePosts.has(l.postId));
+      db.communities.forEach((c) => recount(c.id));
       setUser(null);
     },
 
@@ -337,6 +436,24 @@ export function createLocalApi(): Api {
     },
     followCounts: async (uid) =>
       delay({ followers: db.follows.filter((f) => f.followeeId === uid).length, following: db.follows.filter((f) => f.followerId === uid).length }),
+    async profileStats(uid) {
+      if (!canView(uid)) return delay(null);
+      return delay({
+        followers: db.follows.filter((f) => f.followeeId === uid).length,
+        following: db.follows.filter((f) => f.followerId === uid).length,
+        gems: db.gems.filter((g) => g.authorId === uid && g.status === "published").length,
+        posts: db.posts.filter((p) => p.authorId === uid && p.status === "published" && community(p.communityId)?.status === "published").length,
+        communities: db.members.filter((m) => m.userId === uid && community(m.communityId)?.status === "published").length,
+      });
+    },
+    async setAvatar(photo) {
+      const p = profile(me())!;
+      p.avatarUrl = photo ? await blobToDataUrl(photo) : null;
+      persist();
+      return delay({ ...p });
+    },
+    listFollowers: async (uid) => delay(db.follows.filter((f) => f.followeeId === uid && canView(f.followerId) && canView(uid)).map((f) => authorRef(f.followerId)).filter(Boolean) as AuthorRef[]),
+    listFollowees: async (uid) => delay(db.follows.filter((f) => f.followerId === uid && canView(f.followeeId) && canView(uid)).map((f) => authorRef(f.followeeId)).filter(Boolean) as AuthorRef[]),
 
     listDestinations: async () => delay(DESTINATIONS),
     listGems: async () => delay(db.gems.filter(visibleGem).map(withAuthor)),
@@ -348,9 +465,15 @@ export function createLocalApi(): Api {
       const uid = me();
       if (countToday(db.gems, (g) => g.authorId === uid) >= DAILY_LIMITS.gems) throw new ApiError("dailyLimit");
       const urls = await Promise.all(photos.slice(0, 6).map(blobToDataUrl));
+      if (input.sourcePostId) {
+        const post = db.posts.find((p) => p.id === input.sourcePostId);
+        if (!post || post.authorId !== uid || post.kind !== "recommendation") throw new ApiError("notYourRecommendation");
+        if (db.gems.some((g) => g.sourcePostId === input.sourcePostId)) throw new ApiError("duplicate");
+      }
       const gem: Gem = {
         ...input, id: id(), authorId: uid, author: null, photos: urls, upvotes: 0, saves: 0, reports: 0, createdAt: now(),
-        status: needsReview(`${input.name} ${input.description} ${input.tip}`) ? "pending" : "published",
+        // Recommendations from Community always wait for a moderator.
+        status: input.sourcePostId || needsReview(`${input.name} ${input.description} ${input.tip}`) ? "pending" : "published",
       };
       db.gems.unshift(gem);
       if (gem.status === "published") award(uid, "gem_published", gem.id);
@@ -522,12 +645,243 @@ export function createLocalApi(): Api {
       if (db.reports.some((r) => r.reporterId === uid && r.targetType === targetType && r.targetId === targetId)) throw new ApiError("alreadyReported");
       if (countToday(db.reports, (r) => r.reporterId === uid) >= DAILY_LIMITS.reports) throw new ApiError("dailyLimit");
       db.reports.push({ id: id(), reporterId: uid, targetType, targetId, reason, details, status: "open", createdAt: now() });
-      const target = targetType === "gem" ? db.gems.find((g) => g.id === targetId) : targetType === "tip" ? db.tips.find((t) => t.id === targetId) : undefined;
-      if (target && "reports" in target) {
-        target.reports++;
-        if (target.reports >= REPORT_HIDE_THRESHOLD && target.status === "published") target.status = "hidden";
+      const count = db.reports.filter((r) => r.targetType === targetType && r.targetId === targetId && r.status === "open").length;
+      const hide = count >= REPORT_HIDE_THRESHOLD;
+      if (targetType === "gem" || targetType === "tip") {
+        const target = targetType === "gem" ? db.gems.find((g) => g.id === targetId) : db.tips.find((t) => t.id === targetId);
+        if (target && "reports" in target) {
+          target.reports++;
+          if (target.reports >= REPORT_HIDE_THRESHOLD && target.status === "published") target.status = "hidden";
+        }
+      } else if (targetType === "post") {
+        const p = db.posts.find((x) => x.id === targetId);
+        if (p) {
+          p.reports++;
+          if (hide && p.status === "published") setPostStatus(p, "hidden");
+        }
+      } else if (targetType === "comment") {
+        const c = db.comments.find((x) => x.id === targetId);
+        if (c && hide && c.status === "published") setCommentStatus(c, "hidden");
+      } else if (targetType === "community") {
+        const c = community(targetId);
+        if (c && hide && c.status === "published") c.status = "hidden";
       }
       persist();
+    },
+
+    // Communities ---------------------------------------------------------------------------
+    listCommunities: async () => delay(db.communities.filter(visibleCommunity).sort((a, b) => b.memberCount - a.memberCount || a.name.localeCompare(b.name))),
+    getCommunity: async (cid) => {
+      const c = community(cid);
+      return delay(c && visibleCommunity(c) ? c : null);
+    },
+    async createCommunity(input: NewCommunity) {
+      const uid = me();
+      if (countToday(db.communities.map((c) => ({ ...c, createdAt: c.createdAt })), (c) => c.createdBy === uid) >= DAILY_LIMITS.communities && !isMod()) throw new ApiError("dailyLimit");
+      const name = input.name.trim();
+      if (name.length < 3 || name.length > 60) throw new ApiError("invalid");
+      if (db.communities.some((c) => c.name.toLowerCase() === name.toLowerCase())) throw new ApiError("communityNameTaken");
+      let slug = slugify(name);
+      while (db.communities.some((c) => c.slug === slug)) slug = `${slugify(name)}-${Math.random().toString(36).slice(2, 7)}`;
+      const c: Community = {
+        ...input, name, description: input.description.trim(), id: id(), slug, official: false, createdBy: uid, memberCount: 1, postCount: 0, createdAt: now(),
+        status: needsReview(`${name} ${input.description}`) ? "pending" : "published",
+      };
+      db.communities.unshift(c);
+      db.members.push({ communityId: c.id, userId: uid, role: "owner", joinedAt: now() });
+      award(uid, "community_created", c.id);
+      persist();
+      return delay(c);
+    },
+    async updateCommunity(cid, patch) {
+      const c = community(cid);
+      if (!c || !(isCommunityMod(cid) || isMod())) throw new ApiError("permission");
+      if (patch.name && db.communities.some((x) => x.id !== cid && x.name.toLowerCase() === patch.name!.trim().toLowerCase())) throw new ApiError("communityNameTaken");
+      Object.assign(c, patch);
+      if ((patch.name !== undefined || patch.description !== undefined) && c.status === "published" && needsReview(`${c.name} ${c.description}`)) c.status = "pending";
+      persist();
+    },
+    async deleteCommunity(cid) {
+      if (!(roleIn(cid) === "owner" || isMod())) throw new ApiError("permission");
+      const postIds = new Set(db.posts.filter((p) => p.communityId === cid).map((p) => p.id));
+      db.communities = db.communities.filter((c) => c.id !== cid);
+      db.members = db.members.filter((m) => m.communityId !== cid);
+      db.posts = db.posts.filter((p) => !postIds.has(p.id));
+      db.comments = db.comments.filter((c) => !postIds.has(c.postId));
+      db.likes = db.likes.filter((l) => !postIds.has(l.postId));
+      db.postSaves = db.postSaves.filter((l) => !postIds.has(l.postId));
+      db.gems.forEach((g) => g.sourcePostId && postIds.has(g.sourcePostId) && (g.sourcePostId = null));
+      persist();
+    },
+    myMemberships: async () => delay(db.currentUserId ? db.members.filter((m) => m.userId === db.currentUserId).map(({ communityId, role, joinedAt }) => ({ communityId, role, joinedAt })) : []),
+    async setMembership(cid, on) {
+      const uid = me();
+      const role = roleIn(cid, uid);
+      if (on && !role) {
+        const c = community(cid);
+        if (!c || c.status !== "published") throw new ApiError("notFound");
+        if (countToday(db.members.map((m) => ({ ...m, createdAt: m.joinedAt })), (m) => m.userId === uid) >= DAILY_LIMITS.joins) throw new ApiError("dailyLimit");
+        db.members.push({ communityId: cid, userId: uid, role: "member", joinedAt: now() });
+        award(uid, "community_joined", cid);
+      } else if (!on && role) {
+        if (role === "owner") throw new ApiError("ownerCannotLeave");
+        db.members = db.members.filter((m) => !(m.communityId === cid && m.userId === uid));
+      }
+      recount(cid);
+      persist();
+    },
+    async listMembers(cid) {
+      const rank = { owner: 0, moderator: 1, member: 2 } as const;
+      const c = community(cid);
+      if (!c || !visibleCommunity(c)) return delay([]);
+      return delay(db.members.filter((m) => m.communityId === cid && (m.userId === db.currentUserId || canView(m.userId)))
+        .map((m): Member | null => {
+          const a = authorRef(m.userId);
+          return a ? { ...a, role: m.role } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => rank[a!.role] - rank[b!.role]) as Member[]);
+    },
+    async setMemberRole(cid, uid2, role) {
+      me();
+      if (roleIn(cid) !== "owner" && !isMod()) throw new ApiError("ownerOnly");
+      const m = db.members.find((x) => x.communityId === cid && x.userId === uid2 && x.role !== "owner");
+      if (!m) throw new ApiError("notFound");
+      m.role = role;
+      persist();
+    },
+    async removeMember(cid, uid2) {
+      me();
+      const target = db.members.find((x) => x.communityId === cid && x.userId === uid2);
+      const allowed = target && target.role !== "owner" && (isMod() || (target.role === "member" && isCommunityMod(cid)) || (target.role === "moderator" && roleIn(cid) === "owner"));
+      if (!allowed) throw new ApiError("permission");
+      db.members = db.members.filter((m) => m !== target);
+      recount(cid);
+      persist();
+    },
+    communitiesOf: async (uid) => {
+      if (uid !== db.currentUserId && !canView(uid)) return delay([]);
+      return delay(db.members.filter((m) => m.userId === uid).map((m) => community(m.communityId)).filter((c): c is Community => !!c && visibleCommunity(c)));
+    },
+
+    // Posts -------------------------------------------------------------------------------------
+    async listPosts(f) {
+      let rows = db.posts.filter(visiblePost);
+      if (f.communityId) rows = rows.filter((p) => p.communityId === f.communityId);
+      if (f.communityIds) rows = rows.filter((p) => f.communityIds!.includes(p.communityId));
+      if (f.authorId) rows = rows.filter((p) => p.authorId === f.authorId);
+      if (f.destinationId) rows = rows.filter((p) => p.destinationId === f.destinationId);
+      if (f.ids) rows = rows.filter((p) => f.ids!.includes(p.id));
+      return delay(rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, f.limit ?? 50).map(postOut));
+    },
+    getPost: async (pid) => {
+      const p = db.posts.find((x) => x.id === pid);
+      return delay(p && visiblePost(p) ? postOut(p) : null);
+    },
+    async createPost(input, photos) {
+      const uid = me();
+      const c = community(input.communityId);
+      if (!c || c.status !== "published" || !roleIn(c.id, uid)) throw new ApiError("joinFirst");
+      if (countToday(db.posts, (p) => p.authorId === uid) >= DAILY_LIMITS.posts && !isMod()) throw new ApiError("dailyLimit");
+      if (input.title.trim().length < 3 || !input.body.trim()) throw new ApiError("invalid");
+      const urls = await Promise.all(photos.slice(0, 6).map(blobToDataUrl));
+      const post: Post = {
+        ...input, title: input.title.trim(), body: input.body.trim(), place: input.place.trim(), id: id(), community: null, authorId: uid, author: null,
+        photos: urls, status: "pending", likes: 0, comments: 0, saves: 0, reports: 0, createdAt: now(), editedAt: null,
+      };
+      db.posts.unshift(post);
+      setPostStatus(post, needsReview(`${post.title} ${post.body} ${post.place}`) ? "pending" : "published");
+      persist();
+      return delay(postOut(post));
+    },
+    async updatePost(pid, patch) {
+      const p = db.posts.find((x) => x.id === pid);
+      if (!p || p.authorId !== me()) throw new ApiError("permission");
+      Object.assign(p, patch, { editedAt: now() });
+      if (p.status === "published" && needsReview(`${p.title} ${p.body} ${p.place}`)) setPostStatus(p, "pending");
+      persist();
+    },
+    async deletePost(pid) {
+      const uid = me();
+      const p = db.posts.find((x) => x.id === pid);
+      if (!p || !(p.authorId === uid || isMod() || isCommunityMod(p.communityId))) throw new ApiError("permission");
+      db.posts = db.posts.filter((x) => x.id !== pid);
+      db.comments = db.comments.filter((c) => c.postId !== pid);
+      db.likes = db.likes.filter((l) => l.postId !== pid);
+      db.postSaves = db.postSaves.filter((l) => l.postId !== pid);
+      db.gems.forEach((g) => g.sourcePostId === pid && (g.sourcePostId = null));
+      recount(p.communityId);
+      persist();
+    },
+    myLikes: async () => delay(db.currentUserId ? db.likes.filter((l) => l.userId === db.currentUserId).map((l) => l.postId) : []),
+    async setLike(pid, on) {
+      const uid = me();
+      const p = db.posts.find((x) => x.id === pid);
+      if (!p || !visiblePost(p)) throw new ApiError("notFound");
+      const has = db.likes.some((l) => l.postId === pid && l.userId === uid);
+      if (on && !has) {
+        if (p.authorId === uid) throw new ApiError("ownPost");
+        if (p.status !== "published") throw new ApiError("permission");
+        db.likes.push({ postId: pid, userId: uid, createdAt: now() });
+        p.likes++;
+        award(p.authorId, "like_received", `${pid}:${uid}`);
+      } else if (!on && has) {
+        db.likes = db.likes.filter((l) => !(l.postId === pid && l.userId === uid));
+        p.likes = Math.max(0, p.likes - 1);
+      }
+      persist();
+    },
+    mySavedPosts: async () =>
+      delay(db.currentUserId ? db.postSaves.filter((l) => l.userId === db.currentUserId).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((l) => l.postId) : []),
+    async setPostSaved(pid, on) {
+      const uid = me();
+      const p = db.posts.find((x) => x.id === pid);
+      const has = db.postSaves.some((l) => l.postId === pid && l.userId === uid);
+      if (on && !has) {
+        if (!p || !visiblePost(p)) throw new ApiError("notFound");
+        db.postSaves.push({ postId: pid, userId: uid, createdAt: now() });
+        p.saves++;
+      } else if (!on && has) {
+        db.postSaves = db.postSaves.filter((l) => !(l.postId === pid && l.userId === uid));
+        if (p) p.saves = Math.max(0, p.saves - 1);
+      }
+      persist();
+    },
+    listComments: async (pid) => delay(db.comments.filter((c) => c.postId === pid && visibleComment(c)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(withAuthor)),
+    async createComment(pid, body) {
+      const uid = me();
+      const p = db.posts.find((x) => x.id === pid);
+      if (!p || p.status !== "published" || !visiblePost(p)) throw new ApiError("notFound");
+      if (!roleIn(p.communityId, uid)) throw new ApiError("joinFirst");
+      if (countToday(db.comments, (c) => c.authorId === uid) >= DAILY_LIMITS.comments && !isMod()) throw new ApiError("dailyLimit");
+      if (!body.trim()) throw new ApiError("invalid");
+      const c: Comment = { id: id(), postId: pid, authorId: uid, author: null, body: body.trim(), status: "pending", createdAt: now(), editedAt: null };
+      db.comments.push(c);
+      setCommentStatus(c, needsReview(c.body) ? "pending" : "published");
+      if (c.status === "published") award(uid, "comment_published", c.id);
+      persist();
+      return delay(withAuthor(c));
+    },
+    async updateComment(cid, body) {
+      const c = db.comments.find((x) => x.id === cid);
+      if (!c || c.authorId !== me()) throw new ApiError("permission");
+      c.body = body.trim();
+      c.editedAt = now();
+      if (c.status === "published" && needsReview(c.body)) setCommentStatus(c, "pending");
+      persist();
+    },
+    async deleteComment(cid) {
+      const uid = me();
+      const c = db.comments.find((x) => x.id === cid);
+      const post = c && db.posts.find((p) => p.id === c.postId);
+      if (!c || !(c.authorId === uid || isMod() || (post && isCommunityMod(post.communityId)))) throw new ApiError("permission");
+      if (c.status === "published") setCommentStatus(c, "rejected");
+      db.comments = db.comments.filter((x) => x.id !== cid);
+      persist();
+    },
+    gemFromPost: async (pid) => {
+      const g = db.gems.find((x) => x.sourcePostId === pid);
+      return delay(g && visibleGem(g) ? withAuthor(g) : null);
     },
 
     xpHistory: async () => delay(db.xp.filter((x) => x.userId === db.currentUserId).map(({ userId: _u, ...x }) => x)),
@@ -537,10 +891,41 @@ export function createLocalApi(): Api {
       return delay({
         gems: db.gems.filter((g) => g.status === "pending" || g.status === "hidden").map(withAuthor),
         tips: db.tips.filter((t) => t.status === "pending" || t.status === "hidden").map(withAuthor),
+        posts: db.posts.filter((p) => p.status === "pending" || p.status === "hidden").map(postOut),
+        comments: db.comments.filter((c) => c.status === "pending" || c.status === "hidden").map(withAuthor),
+        communities: db.communities.filter((c) => c.status === "pending" || c.status === "hidden"),
         reports: db.reports.filter((r) => r.status === "open"),
       });
     },
     async moderate(targetType, tid, status: ContentStatus) {
+      const closeReports = () => {
+        for (const r of db.reports) {
+          if (r.targetType === targetType && r.targetId === tid && r.status === "open") r.status = status === "published" ? "dismissed" : "resolved";
+        }
+      };
+      if (targetType === "post" || targetType === "comment" || targetType === "community") {
+        if (targetType === "community") {
+          const c = community(tid);
+          if (!isMod()) throw new ApiError("moderatorsOnly");
+          if (!c) throw new ApiError("notFound");
+          c.status = status;
+        } else if (targetType === "post") {
+          const p = db.posts.find((x) => x.id === tid);
+          if (!p) throw new ApiError("notFound");
+          if (!isMod() && !isCommunityMod(p.communityId)) throw new ApiError("moderatorsOnly");
+          setPostStatus(p, status);
+          if (status === "published") p.reports = 0;
+        } else {
+          const c = db.comments.find((x) => x.id === tid);
+          const post = c && db.posts.find((p) => p.id === c.postId);
+          if (!c || !post) throw new ApiError("notFound");
+          if (!isMod() && !isCommunityMod(post.communityId)) throw new ApiError("moderatorsOnly");
+          setCommentStatus(c, status);
+        }
+        closeReports();
+        persist();
+        return;
+      }
       if (!isMod()) throw new ApiError("moderatorsOnly");
       const target = targetType === "gem" ? db.gems.find((g) => g.id === tid) : db.tips.find((t) => t.id === tid);
       if (!target) throw new ApiError("notFound");

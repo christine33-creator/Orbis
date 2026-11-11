@@ -7,14 +7,21 @@ export interface TripSeedItem {
   title: string;
 }
 
-export type Tab = "explore" | "saved" | "trips" | "passport";
+export type Tab = "explore" | "community" | "saved" | "trips" | "passport";
+export type CommunityView = "forYou" | "mine" | "discover";
 
 export type Overlay =
   | { type: "destination"; id: string }
   | { type: "gem"; id: string }
   | { type: "event"; id: string }
   | { type: "profile"; id: string }
-  | { type: "shareGem"; destinationId?: string }
+  | { type: "shareGem"; destinationId?: string; fromPost?: { id: string; name: string; description: string } }
+  | { type: "community"; id: string }
+  | { type: "post"; id: string }
+  | { type: "postForm"; communityId?: string; postId?: string }
+  | { type: "communityForm"; id?: string }
+  | { type: "members"; communityId: string }
+  | { type: "people"; userId: string; which: "followers" | "following" }
   | { type: "newTrip"; destinationId?: string; items?: TripSeedItem[] }
   | { type: "addToTrip"; itemType: ItemType; itemId: string; title: string; destinationId?: string | null }
   | { type: "report"; targetType: ReportTarget; targetId: string; label: string; authorId?: string }
@@ -47,6 +54,8 @@ interface UiState {
   toasts: Toast[];
   activeTripId: string | null;
   exploreView: "feed" | "map";
+  communityView: CommunityView;
+  setCommunityView: (v: CommunityView) => void;
   setTab: (t: Tab) => void;
   open: (o: Overlay) => void;
   close: () => void;
@@ -67,6 +76,8 @@ export const useUi = create<UiState>()((set) => ({
   toasts: [],
   activeTripId: null,
   exploreView: "feed",
+  communityView: "forYou",
+  setCommunityView: (communityView) => set({ communityView }),
   setTab: (tab) => set({ tab, overlays: [] }),
   open: (o) => set((s) => ({ overlays: [...s.overlays, o] })),
   close: () => set((s) => ({ overlays: s.overlays.slice(0, -1) })),

@@ -18,7 +18,7 @@ export const REPORT_HIDE_THRESHOLD = 3;
 
 export const HANDLE_RE = /^[a-z0-9_.]{3,30}$/;
 
-export const DAILY_LIMITS = { gems: 10, tips: 20, trips: 20, reports: 30 } as const;
+export const DAILY_LIMITS = { gems: 10, tips: 20, trips: 20, reports: 30, communities: 3, posts: 20, comments: 100, joins: 50, likes: 500 } as const;
 
 export const XP_AWARDS = {
   profile_completed: 100,
@@ -30,6 +30,22 @@ export const XP_AWARDS = {
   trip_created: 60,
   stop_done: 15,
   followed: 5,
+  post_published: 20,
+  comment_published: 5,
+  like_received: 2,
+  community_joined: 10,
+  community_created: 30,
 } as const;
+
+/** Mirrors the database's daily XP caps per reason. */
+export const XP_DAILY_CAPS: Partial<Record<keyof typeof XP_AWARDS, number>> = {
+  post_published: 100, comment_published: 50, like_received: 100, community_joined: 50, community_created: 60,
+};
+
+/** Readable community address, like the database's slug trigger. */
+export function slugify(name: string) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return (base.length < 3 ? "community" : base).slice(0, 48);
+}
 
 export type XpReason = keyof typeof XP_AWARDS;
