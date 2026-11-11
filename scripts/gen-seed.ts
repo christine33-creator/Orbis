@@ -54,9 +54,10 @@ out.push("");
 // Official starter communities: empty, with no members or posts.
 for (const c of COMMUNITY_SEEDS) {
   out.push(
-    `insert into public.communities (slug, name, description, category, destination_id, country, styles, hue, official) values (` +
+    // The database derives the address (slug) from the name, so match existing rows by name.
+    `insert into public.communities (slug, name, description, category, destination_id, country, styles, hue, official) select ` +
       [q(c.slug), q(c.name), q(c.description), q(c.category), c.destinationId ? q(c.destinationId) : "null", q(c.country), arr(c.styles), c.hue, "true"].join(", ") +
-      `) on conflict (slug) do nothing;`,
+      ` where not exists (select 1 from public.communities where lower(btrim(name)) = lower(${q(c.name)}));`,
   );
 }
 out.push("", "commit;", "");

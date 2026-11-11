@@ -48,7 +48,7 @@ export const DEMO_POSTS: {
     comments: [],
   },
   {
-    key: "w-trek", community: "trail-and-summit", authorId: "demo-mateo", kind: "discussion", title: "W Trek: east to west or west to east?",
+    key: "w-trek", community: "trail-summit", authorId: "demo-mateo", kind: "discussion", title: "W Trek: east to west or west to east?",
     body: "I've guided both directions. East to west saves Base Torres for the first full day when legs are fresh, west to east ends with the towers at sunrise. Which did you prefer?",
     destinationId: "patagonia", place: "Torres del Paine", hoursAgo: 48, likedBy: ["demo-kenji"],
     comments: [{ authorId: "demo-marcos", body: "West to east. Ending at the towers felt like the right finale." }],
